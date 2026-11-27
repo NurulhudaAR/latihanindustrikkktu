@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UPIA Dashboard – Kolej Komuniti Kuala Terengganu</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;background:#f0f4f8;color:#1a2340;line-height:1.6;min-height:100vh}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#f0f4f8}
+::-webkit-scrollbar-thumb{background:#b0bec5;border-radius:3px}
+:root{
+  --navy:#0a2342;--navy-mid:#1a3a5c;--teal:#0097a7;--teal-light:#4dd0e1;
+  --white:#ffffff;--gray-50:#f8fafc;--gray-100:#f0f4f8;--gray-200:#e2e8f0;
+  --gray-300:#cbd5e0;--gray-400:#a0aec0;--gray-500:#718096;--gray-700:#4a5568;--gray-900:#1a202c;
+  --green:#16a34a;--green-bg:#dcfce7;--yellow:#ca8a04;--yellow-bg:#fef9c3;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.12);--shadow-md:0 4px 12px rgba(0,0,0,.12);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.14);--radius:8px;--radius-lg:12px;
+}
+/* Layout */
+#admin-app{display:flex;min-height:100vh}
+.sidebar{width:256px;background:var(--navy);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:200;overflow-y:auto;transition:transform .3s}
+.main-wrap{flex:1;margin-left:256px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid var(--gray-200);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+.page-area{flex:1;padding:24px;overflow-x:hidden}
+/* Sidebar */
+.sb-brand{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo{width:42px;height:42px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;margin-bottom:8px}
+.sb-brand h1{font-size:13px;font-weight:700;color:#fff;line-height:1.3}
+.sb-brand p{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px}
+.sb-nav{flex:1;padding:10px 0}
+.nav-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);padding:14px 18px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;color:rgba(255,255,255,.72);font-size:13px;font-weight:500;border-left:3px solid transparent;transition:all .15s;cursor:pointer;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:rgba(0,188,212,.12);color:var(--teal-light);border-left-color:var(--teal-light);font-weight:600}
+.sb-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1)}
+.user-row{display:flex;align-items:center;gap:9px}
+.user-av{width:34px;height:34px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:600;color:#fff}
+.user-role{font-size:10px;color:rgba(255,255,255,.5)}
+/* Topbar */
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-title{font-size:15px;font-weight:700;color:var(--navy)}
+.tb-crumb{font-size:11px;color:var(--gray-500)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius);font-size:13px;font-weight:500;border:none;transition:all .15s;white-space:nowrap;cursor:pointer}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy-mid)}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:#00838f}
+.btn-out{background:#fff;color:var(--navy);border:1px solid var(--gray-300)}.btn-out:hover{background:var(--gray-50)}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:#b91c1c}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 7px;font-size:11px}
+/* Cards */
+.card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200)}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:700;color:var(--navy)}
+.card-bd{padding:18px}
+.card-bd-sm{padding:12px 18px}
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:#fff;border-radius:var(--radius-lg);padding:18px;border:1px solid var(--gray-200);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:14px}
+.stat-ic{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.si-navy{background:rgba(10,35,66,.1);color:var(--navy)}
+.si-teal{background:rgba(0,151,167,.1);color:var(--teal)}
+.si-green{background:#dcfce7;color:#16a34a}
+.si-yellow{background:#fef9c3;color:#ca8a04}
+.stat-label{font-size:11px;color:var(--gray-500);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.stat-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1.1}
+.stat-sub{font-size:11px;color:var(--gray-500);margin-top:1px}
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.b-green{background:var(--green-bg);color:#166534}.b-green::before{background:#16a34a}
+.b-yellow{background:var(--yellow-bg);color:#854d0e}.b-yellow::before{background:#ca8a04}
+.b-red{background:var(--red-bg);color:#991b1b}.b-red::before{background:#dc2626}
+.b-blue{background:#dbeafe;color:#1e40af}.b-blue::before{background:#3b82f6}
+.b-gray{background:#f1f5f9;color:#475569}.b-gray::before{background:#94a3b8}
+/* Tables */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--gray-50);color:var(--gray-700);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:9px 11px;border-bottom:2px solid var(--gray-200);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--gray-100);transition:background .1s}
+tbody tr:hover{background:#fafbfc}
+tbody td{padding:9px 11px;vertical-align:middle;color:var(--gray-700)}
+.cell-name{font-weight:600;color:var(--navy)}
+.cell-mat{font-family:monospace;font-size:12px;color:var(--gray-500)}
+.tbl-empty{text-align:center;padding:36px;color:var(--gray-400)}
+/* Toggle checkbox */
+.ck{width:19px;height:19px;border-radius:4px;border:2px solid var(--gray-300);appearance:none;-webkit-appearance:none;cursor:pointer;position:relative;transition:all .15s;background:#fff;display:block;margin:0 auto}
+.ck:checked{background:var(--green);border-color:var(--green)}
+.ck:checked::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#fff;font-weight:700;line-height:1}
+.ck:disabled{opacity:.5;cursor:not-allowed}
+/* Status select */
+.ss{padding:3px 7px;border-radius:6px;border:1px solid var(--gray-300);font-size:11px;font-weight:500;background:#fff;cursor:pointer;min-width:100px}
+.ss:disabled{cursor:not-allowed;opacity:.6;background:var(--gray-100)}
+/* Forms */
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:4px}
+.fc{width:100%;padding:8px 11px;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:13px;color:var(--gray-900);transition:border-color .15s;background:#fff}
+.fc:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,151,167,.1)}
+.fc::placeholder{color:var(--gray-400)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* Filter bar */
+.fb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 14px;background:var(--gray-50);border-radius:var(--radius);border:1px solid var(--gray-200);margin-bottom:14px}
+.sw{position:relative;flex:1;min-width:180px}
+.si-abs{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none}
+.si-inp{width:100%;padding:7px 11px 7px 30px;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:13px;background:#fff}
+.si-inp:focus{outline:none;border-color:var(--teal)}
+.fs{padding:7px 9px;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:13px;background:#fff;color:var(--gray-700)}
+.fs:focus{outline:none;border-color:var(--teal)}
+/* Modals */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.mo.show{opacity:1;pointer-events:auto}
+.md{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;transform:translateY(16px);transition:transform .2s}
+.mo.show .md{transform:translateY(0)}
+.md-lg{max-width:700px}
+.md-hd{padding:16px 18px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between}
+.md-title{font-size:14px;font-weight:700;color:var(--navy)}
+.md-x{width:26px;height:26px;border-radius:6px;border:none;background:var(--gray-100);color:var(--gray-500);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.md-x:hover{background:var(--gray-200)}
+.md-bd{padding:18px}
+.md-ft{padding:12px 18px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:7px}
+/* Login */
+#login-pg{min-height:100vh;background:linear-gradient(135deg,#0a2342 0%,#1a3a5c 50%,#0d4f6e 100%);display:flex;align-items:center;justify-content:center;padding:18px}
+.lc{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:400px;overflow:hidden}
+.lc-hd{background:linear-gradient(135deg,var(--navy),var(--teal));padding:28px 28px 20px;text-align:center}
+.lc-logo{width:54px;height:54px;background:rgba(255,255,255,.15);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;margin:0 auto 12px}
+.lc-hd h2{color:#fff;font-size:16px;font-weight:700}
+.lc-hd p{color:rgba(255,255,255,.65);font-size:11px;margin-top:3px}
+.lc-bd{padding:24px 28px 28px}
+.ltabs{display:flex;margin-bottom:20px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--gray-200)}
+.ltab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--gray-500);border:none;transition:all .15s}
+.ltab.active{background:var(--navy);color:#fff}
+.lerr{background:#fee2e2;color:#991b1b;border-radius:6px;padding:9px 11px;font-size:12px;margin-bottom:12px;display:none}
+/* Student view */
+#sv{min-height:100vh;background:var(--gray-100)}
+.sv-top{background:var(--navy);padding:12px 18px;display:flex;align-items:center;justify-content:space-between}
+/* Charts */
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+.ch-box{position:relative;height:270px;padding:10px 14px 14px}
+/* Progress bars */
+.pr-row{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.pr-lbl{font-size:12px;color:var(--gray-700);min-width:155px;flex-shrink:0}
+.pr-track{flex:1;height:7px;background:var(--gray-200);border-radius:4px;overflow:hidden}
+.pr-fill{height:100%;border-radius:4px;background:var(--teal);transition:width .5s}
+.pr-pct{font-size:11px;font-weight:600;color:var(--gray-600);min-width:34px;text-align:right}
+/* Page header */
+.ph{margin-bottom:18px}
+.ph h2{font-size:19px;font-weight:800;color:var(--navy)}
+.ph p{font-size:13px;color:var(--gray-500);margin-top:2px}
+/* Pagination */
+.pag{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--gray-100);font-size:12px;color:var(--gray-500)}
+.pag-ctrl{display:flex;gap:3px}
+.pb{width:26px;height:26px;border-radius:5px;border:1px solid var(--gray-200);background:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-700)}
+.pb:hover{background:var(--gray-100)}
+.pb.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pb:disabled{opacity:.4;cursor:default}
+/* Toast */
+.tc{position:fixed;top:66px;right:14px;z-index:999;display:flex;flex-direction:column;gap:7px}
+.toast{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);border-left:4px solid var(--teal);padding:11px 14px;min-width:270px;max-width:340px;font-size:13px;color:var(--gray-700);transform:translateX(400px);transition:transform .3s;display:flex;align-items:center;gap:9px}
+.toast.show{transform:translateX(0)}
+.toast.ts{border-left-color:#16a34a}
+.toast.te{border-left-color:#dc2626}
+.toast.tw{border-left-color:#ca8a04}
+/* Upload zone */
+.uz{border:2px dashed var(--gray-300);border-radius:var(--radius);padding:22px;text-align:center;cursor:pointer;transition:all .15s;background:var(--gray-50)}
+.uz:hover,.uz.dv{border-color:var(--teal);background:rgba(0,151,167,.03)}
+.uz p{color:var(--gray-500);font-size:13px}
+/* Import preview */
+.ip{max-height:190px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:var(--radius);font-size:12px}
+.ip table td,.ip table th{padding:4px 8px}
+/* Detail */
+.dr{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-100);font-size:13px}
+.dr:last-child{border-bottom:none}
+.dr dt{color:var(--gray-500);font-weight:500}
+.dr dd{color:var(--navy);font-weight:600;text-align:right}
+.ms-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.ms-item{padding:9px 11px;border-radius:var(--radius);border:1px solid var(--gray-200);background:var(--gray-50)}
+.ms-name{font-size:11px;font-weight:600;color:var(--gray-700);margin-bottom:3px}
+/* Utils */
+.hidden{display:none!important}
+.flex{display:flex}.aic{align-items:center}.gap2{gap:8px}.gap3{gap:12px}.mla{margin-left:auto}
+.mt3{margin-top:12px}.mt4{margin-top:16px}.mb3{margin-bottom:12px}.mb4{margin-bottom:16px}
+.tsm{font-size:12px}.tmut{color:var(--gray-500)}.fw7{font-weight:700}.wf{width:100%}
+.div{height:1px;background:var(--gray-200);margin:16px 0}
+/* Hamburger */
+.hbg{display:none;width:34px;height:34px;border-radius:var(--radius);border:1px solid var(--gray-200);background:#fff;align-items:center;justify-content:center;color:var(--gray-600);flex-direction:column;gap:4px;padding:7px}
+.hbg span{display:block;width:15px;height:2px;background:currentColor;border-radius:1px}
+.sb-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:150}
+.sb-back.show{display:block}
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main-wrap{margin-left:0}.hbg{display:flex!important}
+  .fr2{grid-template-columns:1fr}.ch-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .stat-grid{grid-template-columns:1fr 1fr}.fb{flex-direction:column;align-items:stretch}
+  .sw{min-width:unset}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="tc" id="tc"></div>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-pg">
+  <div class="lc">
+    <div class="lc-hd">
+      <div class="lc-logo">U</div>
+      <h2>UPIA Dashboard</h2>
+      <p>Unit Perhubungan Industri &amp; Alumni<br>Kolej Komuniti Kuala Terengganu</p>
+    </div>
+    <div class="lc-bd">
+      <div class="ltabs">
+        <button class="ltab active" onclick="switchTab('staff')">Staff / PHLIP</button>
+        <button class="ltab" onclick="switchTab('student')">Pelajar</button>
+      </div>
+      <div id="sf">
+        <div id="lerr" class="lerr">ID atau kata laluan tidak sah. Sila cuba lagi.</div>
+        <div class="fg"><label class="fl">ID Staf / E-mel</label><input class="fc" id="lid" type="text" placeholder="admin atau admin@kktren.edu.my" autocomplete="username"/></div>
+        <div class="fg"><label class="fl">Kata Laluan</label><input class="fc" id="lpw" type="password" placeholder="Kata laluan" autocomplete="current-password"/></div>
+        <button class="btn btn-navy wf" style="justify-content:center;padding:10px" onclick="doLogin()">Log Masuk</button>
+        <p class="tsm tmut mt4" style="text-align:center">Demo: ID <strong>admin</strong> / Kata Laluan <strong>admin123</strong></p>
+      </div>
+      <div id="stf" class="hidden">
+        <div class="fg"><label class="fl">No. Matrik Pelajar</label><input class="fc" id="smi" type="text" placeholder="Contoh: 14DIT24F1001"/></div>
+        <button class="btn btn-teal wf" style="justify-content:center;padding:10px" onclick="doStudentSearch()">Semak Status</button>
+        <p class="tsm tmut mt4" style="text-align:center">Pelajar hanya boleh melihat status sendiri.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STUDENT VIEW ===== -->
+<div id="sv" class="hidden">
+  <div class="sv-top">
+    <div class="flex aic gap2">
+      <div style="width:34px;height:34px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff">U</div>
+      <div><div style="color:#fff;font-size:13px;font-weight:700">UPIA Dashboard</div><div style="color:rgba(255,255,255,.5);font-size:10px">Paparan Pelajar (Baca Sahaja)</div></div>
+    </div>
+    <button class="btn btn-out btn-sm" onclick="svBack()">← Kembali</button>
+  </div>
+  <div style="max-width:860px;margin:0 auto;padding:22px 14px">
+    <div class="stat-grid" id="sv-stats" style="grid-template-columns:repeat(2,1fr)"></div>
+    <div class="card mb4">
+      <div class="card-hd"><span class="card-title" id="sv-name">—</span><span id="sv-badge"></span></div>
+      <div class="card-bd">
+        <dl>
+          <div class="dr"><dt>No. Matrik</dt><dd id="sv-mat">—</dd></div>
+          <div class="dr"><dt>Program / Kelas</dt><dd id="sv-prog">—</dd></div>
+          <div class="dr"><dt>Semester</dt><dd id="sv-sem">—</dd></div>
+          <div class="dr" id="sv-cr"><dt>Nama Syarikat</dt><dd id="sv-co">—</dd></div>
+          <div class="dr" id="sv-pr"><dt>Pensyarah Penilai</dt><dd id="sv-pe">—</dd></div>
+        </dl>
+        <div class="div"></div>
+        <div class="tsm fw7" style="color:var(--gray-700);margin-bottom:9px;text-transform:uppercase;letter-spacing:.04em">Status Milestone</div>
+        <div class="ms-grid" id="sv-ms"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Statistik Keseluruhan (Pandangan Am)</span></div>
+      <div class="card-bd" id="sv-ov"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN APP ===== -->
+<div id="admin-app" class="hidden">
+  <div class="sb-back" id="sb-back" onclick="closeSb()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">U</div>
+      <h1>UPIA Dashboard</h1>
+      <p>Kolej Komuniti Kuala Terengganu</p>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-sec">Menu Utama</div>
+      <div class="nav-item active" data-p="dash" onclick="nav('dash')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Papan Pemuka
+      </div>
+      <div class="nav-sec">Modul Pelajar</div>
+      <div class="nav-item" data-p="s3" onclick="nav('s3')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Semester 3 – Pra-LI
+      </div>
+      <div class="nav-item" data-p="s4" onclick="nav('s4')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-7 10 7-10 7-10-7zM6 12v5c3.33 1.67 8.67 1.67 12 0v-5"/></svg>
+        Semester 4 – LI Aktif
+      </div>
+      <div class="nav-sec">Laporan</div>
+      <div class="nav-item" data-p="lap" onclick="nav('lap')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Eksport &amp; Laporan
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <div class="user-row">
+        <div class="user-av">A</div>
+        <div><div class="user-name" id="sb-uname">Admin</div><div class="user-role">Pensyarah Penyelaras (PHLIP)</div></div>
+      </div>
+      <button class="btn btn-out btn-sm wf mt3" style="justify-content:center" onclick="logout()">Log Keluar</button>
+    </div>
+  </aside>
+  <div class="main-wrap">
+    <header class="topbar">
+      <div class="tb-left">
+        <button class="hbg" id="hbg" onclick="toggleSb()"><span></span><span></span><span></span></button>
+        <div><div class="tb-title" id="tb-title">Papan Pemuka</div><div class="tb-crumb" id="tb-crumb">UPIA / Papan Pemuka</div></div>
+      </div>
+      <div class="flex aic gap2"><span class="tsm tmut" id="tb-date"></span></div>
+    </header>
+    <main class="page-area">
+      <div id="pg-dash"></div>
+      <div id="pg-s3" class="hidden"></div>
+      <div id="pg-s4" class="hidden"></div>
+      <div id="pg-lap" class="hidden"></div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: Add/Edit Sem3 -->
+<div class="mo" id="mo-s3">
+  <div class="md">
+    <div class="md-hd"><span class="md-title" id="mo-s3-title">Tambah Pelajar Semester 3</span><button class="md-x" onclick="closeMo('mo-s3')">✕</button></div>
+    <div class="md-bd">
+      <div class="fr2">
+        <div class="fg"><label class="fl">Nama Pelajar *</label><input class="fc" id="s3n" placeholder="Nama penuh"/></div>
+        <div class="fg"><label class="fl">No. Matrik *</label><input class="fc" id="s3m" placeholder="14DIT24F1001"/></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Program *</label>
+          <select class="fc" id="s3p"><option value="">-- Pilih --</option>
+            <option>14DIT – Diploma Teknologi Maklumat</option><option>14DAC – Diploma Perakaunan</option>
+            <option>14DBM – Diploma Pengurusan Perniagaan</option><option>14DEC – Diploma Elektronik Komputer</option>
+            <option>14DAD – Diploma Reka Bentuk Grafik</option></select>
+        </div>
+        <div class="fg"><label class="fl">Kelas</label><input class="fc" id="s3k" placeholder="A / B / C"/></div>
+      </div>
+      <div class="fg"><label class="fl">Status Milestone</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px">
+          <label class="tsm flex aic gap2"><input type="checkbox" id="s3t1"> Taklimat 1</label>
+          <label class="tsm flex aic gap2"><input type="checkbox" id="s3t2"> Taklimat 2</label>
+          <label class="tsm flex aic gap2"><input type="checkbox" id="s3wr"> Bengkel Resume</label>
+          <label class="tsm flex aic gap2"><input type="checkbox" id="s3pd"> Penghantaran Dokumen</label>
+        </div>
+      </div>
+    </div>
+    <div class="md-ft"><button class="btn btn-out" onclick="closeMo('mo-s3')">Batal</button><button class="btn btn-navy" onclick="saveS3()">Simpan</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Add/Edit Sem4 -->
+<div class="mo" id="mo-s4">
+  <div class="md md-lg">
+    <div class="md-hd"><span class="md-title" id="mo-s4-title">Tambah Pelajar Semester 4</span><button class="md-x" onclick="closeMo('mo-s4')">✕</button></div>
+    <div class="md-bd">
+      <div class="fr2">
+        <div class="fg"><label class="fl">Nama Pelajar *</label><input class="fc" id="s4n" placeholder="Nama penuh"/></div>
+        <div class="fg"><label class="fl">No. Matrik *</label><input class="fc" id="s4m" placeholder="14DIT23F1001"/></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Program *</label>
+          <select class="fc" id="s4p"><option value="">-- Pilih --</option>
+            <option>14DIT – Diploma Teknologi Maklumat</option><option>14DAC – Diploma Perakaunan</option>
+            <option>14DBM – Diploma Pengurusan Perniagaan</option><option>14DEC – Diploma Elektronik Komputer</option>
+            <option>14DAD – Diploma Reka Bentuk Grafik</option></select>
+        </div>
+        <div class="fg"><label class="fl">Kelas</label><input class="fc" id="s4k" placeholder="A / B / C"/></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">Nama Syarikat *</label><input class="fc" id="s4sy" placeholder="Nama majikan"/></div>
+        <div class="fg"><label class="fl">Pensyarah Penilai</label>
+          <select class="fc" id="s4pe"><option value="">-- Pilih --</option>
+            <option>Dr. Norlina Mohd Yusof</option><option>En. Hafizuddin Che Mat</option>
+            <option>Pn. Siti Hajar Mohd Salleh</option><option>En. Mohd Faiz Zulkifli</option>
+            <option>Pn. Norzarifah Hasan</option><option>En. Khairul Anuar Ismail</option></select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Status Milestone Pemantauan</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:5px">
+          <div><div class="tsm fw7 mb3" style="color:var(--gray-700)">Kad Lapor Diri</div><select class="fc ss" id="s4m1"><option>Belum Selesai</option><option>Dalam Proses</option><option>Selesai</option></select></div>
+          <div><div class="tsm fw7 mb3" style="color:var(--gray-700)">Pemantauan Penilai</div><select class="fc ss" id="s4m2"><option>Belum Selesai</option><option>Dalam Proses</option><option>Selesai</option></select></div>
+          <div><div class="tsm fw7 mb3" style="color:var(--gray-700)">Buku Catatan / Laporan LI</div><select class="fc ss" id="s4m3"><option>Belum Selesai</option><option>Dalam Proses</option><option>Selesai</option></select></div>
+          <div><div class="tsm fw7 mb3" style="color:var(--gray-700)">Maklumbalas Syarikat (D1)</div><select class="fc ss" id="s4m4"><option>Belum Selesai</option><option>Dalam Proses</option><option>Selesai</option></select></div>
+          <div><div class="tsm fw7 mb3" style="color:var(--gray-700)">Maklumbalas Pelajar (D2)</div><select class="fc ss" id="s4m5"><option>Belum Selesai</option><option>Dalam Proses</option><option>Selesai</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="md-ft"><button class="btn btn-out" onclick="closeMo('mo-s4')">Batal</button><button class="btn btn-navy" onclick="saveS4()">Simpan</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Delete Confirm -->
+<div class="mo" id="mo-del">
+  <div class="md" style="max-width:380px">
+    <div class="md-hd"><span class="md-title">Sahkan Padam</span><button class="md-x" onclick="closeMo('mo-del')">✕</button></div>
+    <div class="md-bd"><p class="tsm" style="color:var(--gray-700)">Adakah anda pasti untuk memadam rekod pelajar <strong id="del-name"></strong>? Tindakan ini tidak boleh dibatalkan.</p></div>
+    <div class="md-ft"><button class="btn btn-out" onclick="closeMo('mo-del')">Batal</button><button class="btn btn-red" onclick="confirmDel()">Padam</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Import CSV -->
+<div class="mo" id="mo-imp">
+  <div class="md md-lg">
+    <div class="md-hd"><span class="md-title" id="imp-title">Import Pelajar (CSV)</span><button class="md-x" onclick="closeMo('mo-imp')">✕</button></div>
+    <div class="md-bd">
+      <div class="uz" id="uz" onclick="document.getElementById('cfi').click()" ondragover="dov(event)" ondrop="dop(event)">
+        <div style="font-size:26px;margin-bottom:7px">📂</div>
+        <p><strong>Klik untuk muat naik</strong> atau seret fail CSV ke sini</p>
+        <p class="tmut" style="font-size:11px;margin-top:3px">Format: Nama, No.Matrik, Program, Kelas[, Syarikat, Penilai]</p>
+      </div>
+      <input type="file" id="cfi" accept=".csv" class="hidden" onchange="hcsv(event)"/>
+      <div id="ip-wrap" class="hidden mt4">
+        <div class="tsm fw7 mb3">Pratonton Data:</div>
+        <div class="ip" id="ip-tbl"></div>
+        <div id="ip-sum" class="tsm tmut mt3"></div>
+      </div>
+    </div>
+    <div class="md-ft">
+      <button class="btn btn-out" onclick="closeMo('mo-imp')">Batal</button>
+      <button class="btn btn-navy hidden" id="btn-imp" onclick="doImport()">Import Rekod</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========== DATA ========== */
+const CREDS=[
+  {id:'admin',email:'admin@kktren.edu.my',pw:'admin123',name:'Mohd Azri bin Hamid'},
+  {id:'staff001',email:'norlina@kktren.edu.my',pw:'pass123',name:'Dr. Norlina Mohd Yusof'},
+  {id:'staff002',email:'hafiz@kktren.edu.my',pw:'pass123',name:'En. Hafizuddin Che Mat'},
+];
+const PROGS=[
+  '14DIT – Diploma Teknologi Maklumat','14DAC – Diploma Perakaunan',
+  '14DBM – Diploma Pengurusan Perniagaan','14DEC – Diploma Elektronik Komputer',
+  '14DAD – Diploma Reka Bentuk Grafik',
+];
+const COMPANIES=[
+  'PETRONAS ICT Sdn. Bhd., KT','Pejabat Daerah Kuala Terengganu','Hospital Sultanah Nur Zahirah',
+  'Maybank Berhad (Cawangan KT)','Jabatan Kerja Raya Terengganu','LHDN Kuala Terengganu',
+  'Universiti Malaysia Terengganu','TNB Kuala Terengganu','SSM Kuala Terengganu',
+  'PKINT Terengganu','Celcom Axiata Berhad (KT)','Bank Rakyat Cawangan KT',
+  'Jabatan Pendaftaran Negara Terengganu','Majlis Bandaraya Kuala Terengganu',
+  'Perbendaharaan Negeri Terengganu','KPMG Kuala Terengganu','Sapura Energy KT',
+  'Yayasan Islam Terengganu','JPS Terengganu','Lembaga Tabung Haji – Cawangan KT',
+];
+const PENILAI=[
+  'Dr. Norlina Mohd Yusof','En. Hafizuddin Che Mat','Pn. Siti Hajar Mohd Salleh',
+  'En. Mohd Faiz Zulkifli','Pn. Norzarifah Hasan','En. Khairul Anuar Ismail',
+];
+const NAMES=[
+  'Muhammad Amirul Hakim bin Zainudin','Nur Aisyah binti Mohd Rashid','Ahmad Firdaus bin Kamarudin',
+  'Siti Nurazira binti Hassan','Mohd Hafiz bin Abdul Rahim','Nurul Hidayah binti Zakaria',
+  'Khairul Nizam bin Ismail','Farah Nabilah binti Yusoff','Zulaikha binti Osman',
+  'Irfan Haikal bin Roslan','Wan Nur Atiqah binti Wan Aziz','Muhamad Syafiq bin Mat Daud',
+  'Aisyah Sofea binti Jaafar','Nor Hidayah binti Mohd Noor','Ahmad Zulhilmi bin Zainal',
+  'Nurul Ain binti Ab. Ghani','Hafizuddin bin Mohd Salleh','Siti Maisarah binti Mahat',
+  'Fatin Nabilah binti Ramli','Muhd Izzat Farhan bin Jusoh','Norhazwani binti Hamdan',
+  'Amirul Asyraf bin Baharudin','Nurfazeera binti Abd Majid','Luqmanul Hakim bin Tarmizi',
+  'Ruziana binti Daud','Mohd Syahir bin Zahari','Nur Liyana binti Abd Halim',
+  'Muhammad Fitri bin Lazim','Nurul Syafiqah binti Alias','Ahmad Ridhwan bin Samsuri',
+  'Nabilah Husna binti Mohd Ariff','Mohd Zulfahmi bin Abd Aziz','Siti Nursyazana binti Daud',
+  'Haziq Mukhriz bin Jamaludin','Fareen Nazira binti Abu Bakar','Muhamad Fadhli bin Nawi',
+  'Norazlinda binti Sulaiman','Khairunnisa binti Zakariya','Ahmad Fakhrul bin Hamzah',
+  'Nurul Faiqah binti Mustapha','Luqman Hakim bin Alias','Siti Rahayu binti Ghazali',
+  'Muhammad Nazrin bin Hashim','Nursyazwanie binti Sahlan','Ahmad Hafiy bin Mohd Tahir',
+  'Zainab binti Abu Hassan','Muhd Aizat Irfan bin Zakaria','Noor Amanina binti Rusli',
+  'Muhamad Fadzilah bin Nordin','Ain Zarith Sofea binti Zainol','Mohd Aliff bin Shaari',
+  'Nabilah Izzati binti Hamzah','Faris Syafiq bin Hamidun','Suraya binti Abdul Razak',
+  'Muhammad Hafif bin Hashim','Nor Atikah binti Yusuf','Zulkhairi bin Zulkifli',
+  'Nurnajwa binti Mohd Fadzil','Ahmad Haris bin Shaharudin','Farhana binti Rahmat',
+];
+
+function rnd(a){return a[Math.floor(Math.random()*a.length)]}
+function rb(p=0.5){return Math.random()<p}
+function rs(sp,pp){const r=Math.random();return r<sp?'Selesai':r<sp+pp?'Dalam Proses':'Belum Selesai'}
+function gmat(prog,yr,seq){
+  const m={'14DIT':'DIT','14DAC':'DAC','14DBM':'DBM','14DEC':'DEC','14DAD':'DAD'};
+  const p=prog.split(' – ')[0];return `${p.substring(0,2)}${m[p]||'DIT'}${yr}F${String(seq).padStart(4,'0')}`;
+}
+
+function genS3(){
+  const d=[];
+  PROGS.forEach((prog,pi)=>{
+    ['A','B'].forEach((k,ki)=>{
+      const cnt=Math.floor(Math.random()*8)+10;
+      for(let i=0;i<cnt;i++){
+        d.push({id:'s3_'+(d.length+1),nama:NAMES[((pi*2+ki)*12+i)%NAMES.length],
+          matric:gmat(prog,24,d.length+1001),program:prog,kelas:k,
+          taklimat1:rb(0.86),taklimat2:rb(0.76),bengkelResume:rb(0.70),penghantaranDokumen:rb(0.65)});
+      }
+    });
+  });
+  return d;
+}
+
+function genS4(){
+  const d=[];
+  PROGS.forEach((prog,pi)=>{
+    ['A','B'].forEach((k,ki)=>{
+      const cnt=Math.floor(Math.random()*7)+8;
+      for(let i=0;i<cnt;i++){
+        d.push({id:'s4_'+(d.length+1),nama:NAMES[(50+(pi*2+ki)*10+i)%NAMES.length],
+          matric:gmat(prog,23,d.length+2001),program:prog,kelas:k,
+          syarikat:rnd(COMPANIES),penilai:rnd(PENILAI),
+          kadLaporDiri:rs(0.75,0.15),pemantauanPenilai:rs(0.60,0.25),
+          bukuCatatan:rs(0.55,0.25),maklumbalasD1:rs(0.50,0.20),maklumbalasD2:rs(0.45,0.20)});
+      }
+    });
+  });
+  return d;
+}
+
+/* ========== DATA PELAJAR SEM 4 DARI XLSX ========== */
+const XLSX_S4=[{id:'xl_1',nama:'MUHAMMAD AIMAN ZAKWAN BIN MOHD JAIDI',matric:'T01SAU25F001',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'POPULAR PRESTIGE SDN. BHD. (PERODUA SC)',penilai:'MOHD FAHMI BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_2',nama:'MUHAMMAD FARIS BIN JAMIUN',matric:'T01SAU25F002',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'MH GARAGE AUTOMOBILE',penilai:'MUHAMMAD HILMI BIN MOHD NOR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_3',nama:'TAN RIC KEN',matric:'T01SAU25F003',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'Millennium Welt KT Sdn. Bhd.',penilai:'Tan Chik Ching',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_4',nama:'MUHAMMAD IZZAT HAKIMI BIN MOHD ZAWAWI',matric:'T01SAU25F004',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'POPULAR PRESTIGE SDN. BHD. (PERODUA SC)',penilai:'MOHD FAHMI BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_5',nama:'MUHAMMAD FARIS BIN YUSDI',matric:'T01SAU25F005',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'ADY WORK ENTERPRISE',penilai:'MOHD ADI SYAFIQ BIN MOHD NASRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_6',nama:'MUHAMMAD AMIRUL DANISH BIN ABD RAHMAN',matric:'T01SAU25F006',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'ROVERTECH AUTOWORKZ SDN BHD',penilai:'MUHAMMAD NAJMUDDIN BIN MOHD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_7',nama:'MOHAMAD FADHLI BIN AHMAD TARMIZZI',matric:'T01SAU25F007',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'SON OF GAHAGIE (SOG) SDN. BHD.',penilai:'ABDUL BARI BIN DZULKAFLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_8',nama:'MUZAFFAR HAKIMI BIN ALMI SAM',matric:'T01SAU25F008',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'MH GARAGE AUTOMOBILE',penilai:'MUHAMMAD HILMI BIN MOHD NOR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_9',nama:'FAQIH FIDAIY BIN MOHD TERMIZI',matric:'T01SAU25F010',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'ROVERTECH AUTOWORKZ SDN BHD',penilai:'MUHAMMAD NAJMUDDIN BIN MOHD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_10',nama:'MUHAMMAD ZAMARUL HAIKAL BIN MOHAMAD ISA',matric:'T01SAU25F011',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'SYARIKAT TAN ENG ANN SDN BHD',penilai:'NUR FATIN HANAN BINTI IMRAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_11',nama:'AIDILL ISKANDAR PUTRA BIN ABDULL AHMAD',matric:'T01SAU25F012',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'CARZONE AUTOTECH',penilai:'Muhammad Afiq',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_12',nama:'MUHAMMAD AMIR IZZAT BIN ABDULLAH',matric:'T01SAU25F013',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'POPULAR PRESTIGE SDN. BHD. (PERODUA SC)',penilai:'MOHD FAHMI BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_13',nama:'MUHAMMAD FIRDAUS HAKIMI BIN MOHD ZUNAIDI',matric:'T01SAU25F014',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AZ AUTO MECHANICS',penilai:'AMIRUDDIN BIN AMRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_14',nama:'AHMAD SHAHRUL HAIQAL BIN RAMLI',matric:'T01SAU25F015',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'KERTEH MOTOR GARAGE',penilai:'ALBERT ONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_15',nama:'MUHAMMAD AIMAN BIN MANSOR',matric:'T01SAU25F016',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'POPULAR PRESTIGE SDN. BHD. (PERODUA SC)',penilai:'MOHD FAHMI BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_16',nama:'MUHAMMAD ARIFF ALIMI BIN ABDULLAH',matric:'T01SAU25F017',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'GRAND PRIMER ENTERPRISE',penilai:'SYAFIZA BINTI WAHAB',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_17',nama:'TUAN MOHAMAD NAZIM AIMAN BIN TUAN MAZDI',matric:'T01SAU25F018',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'ADY WORK ENTERPRISE',penilai:'MOHD ADI SYAFIQ BIN MOHD NASRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_18',nama:'WAN AMMAR MUTTAQIN BIN WAN HASSAN',matric:'T01SAU25F019',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'CARZONE AUTOTECH',penilai:'Muhammad Afiq',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_19',nama:'MUHAMMAD PUTRA DANISH BIN OTHMAN',matric:'T01SAU25F020',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'PRO IBAI AUTO SERVICES SDN BHD',penilai:'ROSMADI BIN MOHD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_20',nama:'SYED PUTERA SHAH BIN SYED MUAZAM SHAH',matric:'T01SAU25F022',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'BYD Terengganu - Prima Motors',penilai:'En. Amir',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_21',nama:'MUHAMMAD RIFQI ASYRAAF BIN RAMLI',matric:'T01SAU25F024',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'ADY WORK ENTERPRISE',penilai:'MOHD ADI SYAFIQ BIN MOHD NASRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_22',nama:'MOHAMMAD DANIAL BIN MOHD YUSOF',matric:'T01SAU25F025',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'GENIUS EUROPE AUTO',penilai:'CHANG WEI JIE',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_23',nama:'MUHAMMAD IZZRUL HAFEEZ BIN MAT ARIFFIN',matric:'T01SAU25F026',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'PERNIAGAAN W.Y.M SDN. BHD.',penilai:'WAN MOHD FARID IHSAN BIN WAN YUSOFF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_24',nama:'AHMAD BIN MD SABRI',matric:'T01SAU25F027',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'MNS GARAGE (M) SDN. BHD.',penilai:'MUHAMMAD IKHWAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_25',nama:'AHMAD ADEEB MUAIZ BIN  AHMAD FAKRUNIZAM',matric:'T01SAU25F028',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'FARIQ OTOMOBIL',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_26',nama:'ARSYAD MUJAHID BIN MOHD ZIT',matric:'T01SAU25F029',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'IZ TYRE & SERVICE CENTER',penilai:'ZUBIR BIN AB RAHMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_27',nama:'AMIRUL ADIEF BIN ZAKARIA',matric:'T01SAU25F030',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AUTOHAUS PRIMA SDN BHD',penilai:'NIK ALIFF FIKRIE B. NIK AHMAD SABRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_28',nama:'AHMAD FAIZ IQBAL BIN MOHD DAIK',matric:'T01SAU25F031',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'PERODUA AUTHORISED SALES SERVICES & SPAREPARTS DEALER PERODUA GONG BADAK',penilai:'WAN MUHAMMAD AMIROL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_29',nama:'AHMAD DAFI DANIAL BIN MOHD SHAHRIL',matric:'T01SAU25F032',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'PERODUA AUTHORISED SALES SERVICES & SPAREPARTS DEALER PERODUA GONG BADAK',penilai:'WAN MUHAMMAD AMIROL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_30',nama:'FARIS RAHIMI BIN ARMAN',matric:'T01SAU25F033',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'KERENGGA ISLAND ENTERPRISE',penilai:'MOHAMAD HAFIZI BIN ALIAS',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_31',nama:'MUHAMMAD HAFIQ RAFIUDIN BIN MOHD HANAFI',matric:'T01SAU25F034',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'SYARIKAT TAN ENG ANN SDN BHD',penilai:'NUR FATIN HANAN BINTI IMRAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_32',nama:'MUHAMMAD DANISH HAIKAL BIN MEOR AHMAD NIZAM',matric:'T01SAU25F035',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'RS AUTOTECH TECHNOLOGY',penilai:'Mohd lzamuddin',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_33',nama:'MUHAMMAD AFIQ ZAQUAN BIN YASIN',matric:'T01SAU25F036',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'REGENCY AUTO PARTS & SERVICES SDN, BHD.',penilai:'TAI LEONG SANG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_34',nama:'MUHAMMAD FAYYADH BIN UBAIDILLAH',matric:'T01SAU25F037',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'NURI MOTOR SDN. BHD.',penilai:'AHMAD AMIRUL BIN BASRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_35',nama:'MUHAMMAD LUQMAN ARIF BIN ABDILLAH',matric:'T01SAU25F038',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AUTOHAUS PRIMA SDN BHD',penilai:'NIK ALIFF FIKRIE B. NIK AHMAD SABRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_36',nama:'KASEEM A/L KAMPHOL',matric:'T01SAU25F039',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'Od Auto Service',penilai:'VEANICE VANNARAT',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_37',nama:'MUHAMMAD ARSYAD DZAKIRIN BIN MOHD ROZALI',matric:'T01SAU25F040',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'NURI MOTOR SDN. BHD.',penilai:'AHMAD AMIRUL BIN BASRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_38',nama:'PHANUK A/L EH CHAN',matric:'T01SAU25F041',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'VIE BROTHER',penilai:'VEE ANN A/L EHNOOM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_39',nama:'MUHAMMAD HANIF AKRAM BIN MOHD YAKI',matric:'T01SAU25F042',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'Tiada Maklumat',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_40',nama:'MUHAMMAD SHARIF IQBAL BIN WAHAB',matric:'T01SAU25F044',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'GRAND PRIMER ENTERPRISE',penilai:'SYAFIZA BINTI WAHAB',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_41',nama:'MUHAMAD AFIQ HAKIM BIN AHMAD KAMAL',matric:'T01SAU25F045',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'JAC AUTO PRO SDN. BHD.',penilai:'MOHAMMAD AMINNUDIN BIN HANIPAH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_42',nama:'MUHAMMAD AZIM DAIM BIN MOHD HASHIM',matric:'T01SAU25F046',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'INDAH SARI OTOMOBIL SDN. BHD. (DUNGUN)',penilai:'AINUL AYUNIE BT ROSLAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_43',nama:'MUHAMMAD SYAZWAN BIN ZAKARIA',matric:'T01SAU25F047',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AZ CONTINENTAL CENTRE SDN BHD',penilai:'CHE KU ANIZAN BIN CHE KU TEH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_44',nama:'MUHAMMAD ARIF FARIHIN BIN RUHAIZAD',matric:'T01SAU25F048',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'USAHA MAJU AUTO SDN BHD',penilai:'MUHAMMAD AZMAN BIN ABU BAKAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_45',nama:'MUHAMMAD DANIEL HAIKAL BIN ZAINAL ABIDIN',matric:'T01SAU25F049',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'MAC SERVICE SDN BHD',penilai:'TENGKU MOHD SAIFUDDIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_46',nama:'MUHAMMAD IRFAN BIN MOHD TAHIR',matric:'T01SAU25F050',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AZ AUTO MECHANICS',penilai:'AMIRUDDIN BIN AMRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_47',nama:'MUHAMMAD AKMAL BIN MUHAMMAD RIZAL',matric:'T01SAU25F051',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'RS AUTOTECH TECHNOLOGY',penilai:'Mohd lzamuddin',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_48',nama:'MUHAMMAD FIRDAUS BIN MOHAMAD ZAKI',matric:'T01SAU25F052',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'KY DOUBLE H SERVICES',penilai:'EN. KHAIRUL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_49',nama:'MOHAMAD AIDIB FIRDAUS BIN AIZAM',matric:'T01SAU25F053',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'IRFAN GLOBAL EMPIRE',penilai:'SITI NORAMALIN BT CHE MOHD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_50',nama:'MUHAMMAD SULAIMAN BIN MUSA',matric:'T01SAU25F054',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AUTOHAUS PRIMA SDN BHD',penilai:'NIK ALIFF FIKRIE B. NIK AHMAD SABRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_51',nama:'MUHAMMAD NAJMI FAIEZ BIN SULAIMAN',matric:'T01SAU25F055',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'BRIT EUROPE WORKS',penilai:'YAZID B. IBRAHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_52',nama:'MUHAMMAD AZIM MUAZ BIN AZMIZUHAN',matric:'T01SAU25F056',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'GAC AUTOCARE SDN. BHD.',penilai:'NUR AYUNI BT YUSOFF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_53',nama:'MUHAMMAD DANIEL EMRAN BIN MOHAMAD',matric:'T01SAU25F057',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'POPULAR PRESTIGE SDN. BHD. (PERODUA SC)',penilai:'MOHD FAHMI BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_54',nama:'MUHAMMAD NUR FIRDAUS BIN SUHAIMEE',matric:'T01SAU25F058',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AYD AUTO SERVICE',penilai:'FARIDUDDIN BIN MAT SWADI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_55',nama:'MUHAMMAD IRFAN BIN IBRAHIM',matric:'T01SAU25F059',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'Tiada Maklumat',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_56',nama:'MUHAMMAD HASIF BIN ALI',matric:'T01SAU25F060',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'PJA SERI KOTA',penilai:'SHAFFIE BIN PUTEH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_57',nama:'WAN MUHAMMAD FAHMI DANIEL BIN W MISLIHA',matric:'T01SAU25F061',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'AZ CONTINENTAL CENTRE SDN BHD',penilai:'CHE KU ANIZAN BIN CHE KU TEH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_58',nama:'MUHAMMAD EIMAN DANIE BIN MOHD YUSOF',matric:'T01SAU25F062',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'SST WORKSHOP  & SERVICES PAKA',penilai:'BAHARUDDIN BIN JOHARI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_59',nama:'MUHAMMAD ATMAR AQID BIN KARIYA SANI',matric:'T01SAU25F063',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'I GARAGE',penilai:'MOHD SUHARDI BIN MOHD YUSOF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_60',nama:'MUHAMMAD ATIKULLAH BIN JUSOH',matric:'T01SAU25F516',program:'SAU - Sijil Teknologi Automotif',kelas:'SAU',syarikat:'HNZ EMPIRE',penilai:'CHE MOHD ZULFITRI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_61',nama:'MUHAMMAD ZARIF IQBAL BIN MOHD ZAWAWI',matric:'T01SKE25F001',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'HMN ELEMECO SDN. BHD',penilai:'NASARUDIN BIN MOHD NOOR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_62',nama:'AIMAN LUTHFI BIN ZIHILMI NUZAFAR',matric:'T01SKE25F002',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZAMUCON RESOURCES',penilai:'MUHAMMAD HAFIDZ DINI BIN KAMARUDDIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_63',nama:'MUHAMMAD AMIRUN NAJWAN BIN MOHAMMAD FAIZAL',matric:'T01SKE25F003',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'RAN GEMILANG ENTERPRISE',penilai:'ROSLI BIN SULONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_64',nama:'UMMAR YAZID BIN ROSAHRANHUZANI',matric:'T01SKE25F004',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ROS CEMPAKA TRADING',penilai:'MUHAMMAD AMIRUL FAHMI BIN AHMAD BAHY',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_65',nama:'MUHAMMAD LAZIM HAFIZI BIN ABDUL RASID',matric:'T01SKE25F005',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TERAS MS ENTERPRISE',penilai:'MAHADI BIN MUSTAPAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_66',nama:'MUHAMMAD DANIAL BIN ABDUL ALIM',matric:'T01SKE25F006',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'MFH BULUH GADING ENTERPRISE',penilai:'WAN MOHD FAKHRULLAH BIN WAN AIZAHA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_67',nama:'MUHAMMAD ARIF FARHAN BIN MUSA',matric:'T01SKE25F007',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZAMUCON RESOURCES',penilai:'MUHAMMAD HAFIDZ DINI BIN KAMARUDDIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_68',nama:'MUHAMAD KHALAF DANIAL BIN MOHD NOOR',matric:'T01SKE25F008',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'SINARAN REZEKI ENTERPRISE',penilai:'MOHD ABDULLAH BIN MAT IDI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_69',nama:'MUHAMMAD EZMAN ISKANDAR BIN ROSMAN',matric:'T01SKE25F009',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'PERNIAGAAN MAAB JAYA',penilai:'MOHD AZRUL BIN ABU BAKAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_70',nama:'AHMAD ISHAK BIN MOHAMAD',matric:'T01SKE25F010',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'BARAKAH SEPADU ELECTRICAL',penilai:'MOHAMAD RUSLIM BIN RAMLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_71',nama:'MUHAMMAD AFIQ DANIAL BIN MOHD RAZMAN',matric:'T01SKE25F011',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZAMUCON RESOURCES',penilai:'MUHAMMAD HAFIDZ DINI BIN KAMARUDDIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_72',nama:'MUHAMAD LUQMAN HAKIM BIN MOHAMAD SAARI',matric:'T01SKE25F012',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZUL ELECTRIC',penilai:'MOHAMAD ZULKIFLEENAIM BIN MOHAMED',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_73',nama:'MUHAMMAD AMSYAR IMAN BIN MOHD HARRIS',matric:'T01SKE25F013',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'MEGATECH MZ SERVICES & TRADING SDN. BHD.',penilai:'EN. MOHD FAKHRUL HAZMI BIN ZULKIPLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_74',nama:'SYARUL ADAM BIN SUHAIMI',matric:'T01SKE25F014',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZMY SEPAKAT ENTERPRISE',penilai:'ZAMRI BIN HAMED',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_75',nama:'MUHAMMAD RAFIQ DANISH BIN KAMARUL',matric:'T01SKE25F015',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZMY SEPAKAT ENTERPRISE',penilai:'ZAMRI BIN HAMED',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_76',nama:'MUHAMMAD SYAHRIN AIMAN BIN ABDULLAH',matric:'T01SKE25F016',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ASTOL ELEKTRICAL SERVICES',penilai:'SUHAIMI BIN SULAIMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_77',nama:'NIK AHMAD AMIR AIRUL BIN NIK MOHD ROSTAM',matric:'T01SKE25F017',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'JABATAN KERJA RAYA NEGERI TERENGGANU (ELEKTRIK)',penilai:'IR. ROZNI AZWAR B. MOHAMAD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_78',nama:'MUHAMMAD EMAN ESKANDAR BIN MOHD ROIZZEMAN',matric:'T01SKE25F018',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TLH HARDWARE AND MACHINERY SDN. BHD.',penilai:'NUR ZAHIRAH IQLIMAA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_79',nama:'MUHAMMAD MIRWANSYAH BIN KAMSAIRI',matric:'T01SKE25F019',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'AZIMAT TELCO SSDN. BHD.',penilai:'MOHD ANWAR BIN MAMAT',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_80',nama:'MUHAMMAD AIMAN ASHRAF BIN MD.JAFRI',matric:'T01SKE25F020',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'JABATAN KERJA RAYA NEGERI TERENGGANU (ELEKTRIK)',penilai:'IR. ROZNI AZWAR B. MOHAMAD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_81',nama:'MOHAMAD RIFAI DZIKRI BIN ROSLI',matric:'T01SKE25F021',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'MEGA LEGACY RESOURCES',penilai:'M. SAIFULNIZAM BIN RAHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_82',nama:'MUHAMMAD ADAM HANIEF BIN AZIZ',matric:'T01SKE25F022',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'PRIMULA BEACH HOTEL',penilai:'ANIE ZURIAH HAJI OMAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_83',nama:'MUHAMMAD AMIR NAQIUDDIN BIN MOHD SAIDI',matric:'T01SKE25F023',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'MASTER TECH',penilai:'MUHAMMAD ANAS BIN MOHD SAIDI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_84',nama:'MUHAMMAD FAIZ IRFAN BIN MOHD SABREE',matric:'T01SKE25F026',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'KEJURUTERAAN ELEKTRIK CAHAYA ALAM S/B',penilai:'NUR AIMAN BIN SHAHARUDDIN ZUBAIDI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_85',nama:'MUHAMMAD ZULHASMIE BIN MAT ZIN',matric:'T01SKE25F027',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'BLACK POWER ENGINEERING',penilai:'AHMAD MUH SHIN BON MD ZAIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_86',nama:'ABDUL HADI BIN MOHD AFANDI',matric:'T01SKE25F028',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'OMAR ARM ENTERPRISE',penilai:'ABDUL RASHID BIN MAHMUD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_87',nama:'MUHAMMAD ADAM IKHWAN BIN MOHD ANUAR',matric:'T01SKE25F029',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'OMAR ARM ENTERPRISE',penilai:'ABDUL RASHID BIN MAHMUD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_88',nama:'MUHAMMAD AKMAL HAKIM BIN MOHD KAMARULZAMAN',matric:'T01SKE25F030',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'KEJURUTERAAN ELEKTRIK CAHAYA ALAM S/B',penilai:'NUR AIMAN BIN SHAHARUDDIN ZUBAIDI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_89',nama:'MUHAMMAD ARIF ZAKWAN BIN MOHAMAD',matric:'T01SKE25F031',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TAP Q RESOURCES',penilai:'MOHD LUKMANUL HAKIM BIN MOHD YUSOFF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_90',nama:'VILIKHIT A/L SU THIN',matric:'T01SKE25F032',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'SPD JAYA TRADING',penilai:'SOMPHOD A/L EDO',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_91',nama:'SAYED IBRAHIM DUWAILLAH BIN SAYED SHAIKH',matric:'T01SKE25F033',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TAP Q RESOURCES',penilai:'MOHD LUKMANUL HAKIM BIN MOHD YUSOFF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_92',nama:'MUHAMMAD IZZAT IKHWAN BIN ABDUL RAHMAN',matric:'T01SKE25F034',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ARASY SYNERGY',penilai:'WAN MUHAMMAD ARIF BIN WAN ATAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_93',nama:'WAN DANIAL HARIS BIN WAN HALIM',matric:'T01SKE25F035',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'SOLARGO ENERGY SDN. BHD.',penilai:'NABIDZAR MOHD RAZALI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_94',nama:'MUHAMMAD IRSYAD AZFAR BIN MOHD NIDZAM',matric:'T01SKE25F036',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'SHAHRUL TECHNICAL & SERVICE',penilai:'SHAHARURIZAN MOHAMED',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_95',nama:'LUQMAN HAKIEM BIN ANIRUL HISHAM',matric:'T01SKE25F037',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'NP JAYA ME TRADING',penilai:'MOHD ZAWAWI BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_96',nama:'NUR NAZIRA TASNIM BINTI MOHD PAHANI',matric:'T01SKE25F038',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZMY SEPAKAT ENTERPRISE',penilai:'ZAMRI BIN HAMED',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_97',nama:'NOOR AINI BINTI ALIAS',matric:'T01SKE25F039',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZMY SEPAKAT ENTERPRISE',penilai:'ZAMRI BIN HAMED',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_98',nama:'AHMAD MUSTAQIM BIN SUPRI',matric:'T01SKE25F040',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZAFS JAYA ENTERPRISE',penilai:'MOHD ZAMRI BIN SAID',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_99',nama:'MUHAMMAD SYARIF NAIM BIN MOHD SUHAIMI',matric:'T01SKE25F041',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'RAN GEMILANG ENTERPRISE',penilai:'ROSLI BIN SULONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_100',nama:'MUHAMMAD SHAHRIZAL BIN RAMLI',matric:'T01SKE25F043',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TAP Q RESOURCES',penilai:'MOHD LUKMANUL HAKIM BIN MOHD YUSOFF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_101',nama:'MOHAMAD FARISH ZAYYAN BIN MOHAMAD HILMI',matric:'T01SKE25F044',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ARASY SYNERGY',penilai:'WAN MUHAMMAD ARIF BIN WAN ATAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_102',nama:'MUHAMMAD AQIL BIN ROSLI',matric:'T01SKE25F045',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZAFS JAYA ENTERPRISE',penilai:'MOHD ZAMRI BIN SAID',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_103',nama:'MUHAMMAD FAKHRUDDIN BIN MOHD ARSAB',matric:'T01SKE25F046',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'KT ELECTRICAL INSTRUMENT (M) SDN. BHD.',penilai:'SYED AZMI BIN TUAN MANSOR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_104',nama:'AHMAD YUSOF KHAN BIN ABDULLAH @ AZAHARI',matric:'T01SKE25F047',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'KENALI ENGINEERING (M) SDN. BHD.',penilai:'EN. NIK MUHAMAD HAFIZ BIN MAT RIFFIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_105',nama:'MUHAMMAD RAFIUDDIN BIN ROSLI',matric:'T01SKE25F048',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ROS CEMPAKA TRADING',penilai:'MUHAMMAD AMIRUL FAHMI BIN AHMAD BAHY',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_106',nama:'AHMAD LUQMAN BIN YUSMA AZHA',matric:'T01SKE25F049',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'RAIA HOTEL & CONVENTION CENTRE TERENGGANU',penilai:'MOHD AZMAN BIN MAT AMIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_107',nama:'MOHAMAD AMMAR HARRIZ BIN MD ARIFFIN',matric:'T01SKE25F050',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TENAGA NASIONAL BERHAD (KOTA BHARU)',penilai:'LILI MARLINA BINTI CHE IDRIS',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_108',nama:'MUHAMMAD NAQIB AZFAR BIN KHAIRUL ASWADI',matric:'T01SKE25F051',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TERAS MS ENTERPRISE',penilai:'MAHADI BIN MUSTAPAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_109',nama:'MUHAMMAD IRFAN BIN A.RAHMAN',matric:'T01SKE25F052',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'P.B.H TRADING & CONTRUCTION SDN. BHD.',penilai:'NURRUZAINI BINTI MOHD NASIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_110',nama:'MUHAMMAD SYAWAL FITRI MOHD FIRDAUS',matric:'T01SKE25F053',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'YMA BINA SDN. BHD.',penilai:'AMIR LUQMAN BIN UMAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_111',nama:'MUHAMAD SHAFIQ NAUFAL BIN ABDULLAH',matric:'T01SKE25F054',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'SKY FREEZE CONDITIONING & ELECTRICAL ENGINEERING (CAW. KEMAMAN)',penilai:'MUHAMMAD AZIZUL FAHMI BIN ZULKARNAIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_112',nama:'MUHAMAD HANIF FAHIM BIN MOHD HANAFI',matric:'T01SKE25F055',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'JABATAN KERJA RAYA NEGERI TERENGGANU (ELEKTRIK)',penilai:'IR. ROZNI AZWAR B. MOHAMAD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_113',nama:'MOHAMAD AIMAN BIN AB RAZAK',matric:'T01SKE25F058',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ILHAM WARISAN JAYA ENTERPRISE SDN BHD',penilai:'Ir Che Hassan bin Che Mahmood',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_114',nama:'MUHAMMAD ADAM HARITH BIN ASRUL HAFIZ',matric:'T01SKE25F060',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'RAN GEMILANG ENTERPRISE',penilai:'ROSLI BIN SULONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_115',nama:'MUHAMMAD ABID NASRULLAH BIN ABDULL ROHMAN',matric:'T01SKE25F062',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TEGOH MAJU GLOBAL RESOURCES',penilai:'MUHAMAD FAIEZ MOHD AZMI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_116',nama:'TENGKU MUHAMMAD ZULFAHMI BIN TENGKU MOHD ZAIDI',matric:'T01SKE25F064',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'MFH BULUH GADING ENTERPRISE',penilai:'WAN MOHD FAKHRULLAH BIN WAN AIZAHA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_117',nama:'MUHAMMAD AQIL SU\\'AIDI BIN MOHD ANUAR',matric:'T01SKE25F065',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'MASA ELECTRICAL',penilai:'ASRI B. MOAD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_118',nama:'MUHAMMAD UMAR FITRI BIN MALIKI',matric:'T01SKE25F066',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'TAP Q RESOURCES',penilai:'MOHD LUKMANUL HAKIM BIN MOHD YUSOFF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_119',nama:'MUHAMMAD AFIQ BIN RAMLI',matric:'T01SKE25F533',program:'SKE - Sijil Teknologi Elektrik',kelas:'SKE',syarikat:'ZMY SEPAKAT ENTERPRISE',penilai:'ZAMRI BIN HAMED',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_120',nama:'AHMAD LUTFI BIN MOHD AZMI',matric:'T01STP25F001',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'SYARIKAT MOHD NOOR YUSOF SDN. BHD.',penilai:'NURUL AFIQAH BINTI MOHD ANUAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_121',nama:'MUHAMMAD AMJAD BIN ZULKIFLY',matric:'T01STP25F002',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'TENGKU AZRIN CONSTRUCTION',penilai:'TENGKU MOHAMAD AZRIN BIN TUAN NAWI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_122',nama:'MUHAMMAD ADAM SHAZWAN BIN MOHD HIRWAN',matric:'T01STP25F003',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'AAKIF RESOURCES',penilai:'EN. MOHAMAD NAZMI BIN MUSA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_123',nama:'NURUL SHARMIMI BINTI MOHD ZAWAWI',matric:'T01STP25F005',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'JKR JAJAHAN KOTA BHARU',penilai:'CIK MAZIANA BT MAZELAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_124',nama:'ANIS FATHIHAH BINTI ROSLI',matric:'T01STP25F006',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'MS GROUP PROPERTY',penilai:'MOHAMAD AZIZUDDIN BIN ALI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_125',nama:'AHMAD SYAKIRIN BIN AHMAD NADZUHA',matric:'T01STP25F007',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'ARMIY EMPIRE',penilai:'MUHAMMAD ARIF BIN RAMLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_126',nama:'NUR NAZIFA ALWANI BINTI MOHD FAUZI',matric:'T01STP25F009',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'GESTORE ENGINEERING',penilai:'EN. ADAM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_127',nama:'MUHAMMAD MUIZZ AZUDDIN BIN SAIFUDDIN',matric:'T01STP25F010',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'Tiada Maklumat',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_128',nama:'MUHAMMAD FARIK IMRAN BIN SAIFUR RAHMAN',matric:'T01STP25F011',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'PEJABAT JURUTERA DAERAH  JABATAN KERJA RAYA KUALA TERENGGANU',penilai:'Ir. Dr. MOHAMMAD ASHARI BIN MUDA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_129',nama:'AHMAD AMRU BIN MOHD ROFIZI',matric:'T01STP25F012',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'CAG MAJUBINA SDN. BHD.',penilai:'NORAMRAN BIN CHE OMAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_130',nama:'MUHAMMAD SHAMSUL ADHA BIN MOHD WARIDI',matric:'T01STP25F013',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'PEJABAT JURUTERA DAERAH  JABATAN KERJA RAYA KUALA TERENGGANU',penilai:'Ir. Dr. MOHAMMAD ASHARI BIN MUDA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_131',nama:'ADZRAFF NUR IMAN BIN SHARIFFUDIN AMRY',matric:'T01STP25F014',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'ASAS BINA IDAMAN ENTERPRISE',penilai:'ABDUL SALAM HASHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_132',nama:'MUHAMMAD HAIQAL BIN MOHD ASARI',matric:'T01STP25F015',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'Tiada Maklumat',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_133',nama:'NIK MOHAMAD AIMAN AIZAD BIN MOHD SHAHRIZAL',matric:'T01STP25F016',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'CAG MAJUBINA SDN. BHD.',penilai:'NORAMRAN BIN CHE OMAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_134',nama:'MUHAMMAD SYAWAL DANISH BIN ROHAIZAB',matric:'T01STP25F017',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'JABATAN KERJA RAYA DAERAH DUNGUN',penilai:'AHMAD SYAHMI BIN MAZLAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_135',nama:'MUHAMMAD SHAHRIL IRWAN BIN MOHD SAIDI',matric:'T01STP25F018',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'MFR GROUP RESOURCES',penilai:'IR. TS. HJ. MUHAMMAD FATUR RAHMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_136',nama:'AINUL MARDHIAH BINTI MUHAMMAD',matric:'T01STP25F020',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'GESTORE ENGINEERING',penilai:'EN. ADAM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_137',nama:'MUHAMMAD SUFI BIN NOR ZAHARI',matric:'T01STP25F021',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'Mahligai Idaman Development Sdn Bhd',penilai:'Nor Alia Sulaiman',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_138',nama:'MUHAMMAD AKIF NASREEN BIN AZMI',matric:'T01STP25F022',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'OBM TECHNIC SDN. BHD.',penilai:'EN. NOR AIZAM BINTI SULONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_139',nama:'NURNAJIHAH NASUHA BINTI AHMAD RAZIF HERMAN',matric:'T01STP25F023',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'AMZA CONSULT',penilai:'NOR AZLIZA BT JAMILI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_140',nama:'NURUL HANNAH DALILI BINTI AZLIN',matric:'T01STP25F024',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'AMZA CONSULT',penilai:'NOR AZLIZA BT JAMILI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_141',nama:'MUHAMMAD IRSYAD BIN MOHD SIDEK',matric:'T01STP25F025',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'TENGKU AZRIN CONSTRUCTION',penilai:'TENGKU MOHAMAD AZRIN BIN TUAN NAWI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_142',nama:'MUHAMMAD SYAMIM SYAZANI IRFAN BIN MAZLAN',matric:'T01STP25F026',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'OBM TECHNIC SDN. BHD.',penilai:'EN. NOR AIZAM BINTI SULONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_143',nama:'MUHAMMAD FAKRUL NAIM BIN ABDUL RASHID',matric:'T01STP25F027',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'MSA TILING ENTERPRISE',penilai:'MUHAMMAD ISA BIN ABU BAKAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_144',nama:'MUHAMMAD NAUFAL IQBAL BIN MOHD SHAMSUDIN',matric:'T01STP25F028',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'LEISURE GENIUS SDN BHD',penilai:'MR. LEE WEE WEE',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_145',nama:'NURZAHIRAH ATIELIA BINTI MOHD SALLEH',matric:'T01STP25F029',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'DUNGUN INTERGRATE SDN. BHD.',penilai:'SITI NOORADILA BT HUSSIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_146',nama:'MUHAMMAD AKID BAZLI BIN AZHARIN',matric:'T01STP25F031',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'MFR GROUP RESOURCES',penilai:'IR. TS. HJ. MUHAMMAD FATUR RAHMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_147',nama:'SALAHUDDIN AYYUB BIN SAIFUL ALIZAM',matric:'T01STP25F032',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'ASAS BINA IDAMAN ENTERPRISE',penilai:'ABDUL SALAM HASHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_148',nama:'NUR ATIQAH BALQIS BINTI FADLI',matric:'T01STP25F033',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'MS GROUP PROPERTY',penilai:'MOHAMAD AZIZUDDIN BIN ALI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_149',nama:'AUGUSTINE CHUDI ANAK EDWIN',matric:'T01STP25F034',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'TENGKU AZRIN CONSTRUCTION',penilai:'TENGKU MOHAMAD AZRIN BIN TUAN NAWI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_150',nama:'MUHAMMAD SYAFIZAL DARWISY BIN MOHD ZAIRIZAL',matric:'T01STP25F035',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'PEJABAT JURUTERA DAERAH  JABATAN KERJA RAYA KUALA TERENGGANU',penilai:'Ir. Dr. MOHAMMAD ASHARI BIN MUDA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_151',nama:'MUHAMMAD KHALIS BIN KARIM',matric:'T01STP25F036',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'DELIMA VENTURE SDN. BHD.',penilai:'MOHD HASMADI HASSAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_152',nama:'NIK MUHAMMAD ANAS FARHAN BIN NIK HASBULLAH',matric:'T01STP25F037',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'EAST ENGINEERING & CONSTRUCTION',penilai:'ABDUL MOHAN ABDUL RAZAK',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_153',nama:'MUHAMMAD AMIRUL AIMAN BIN MOHD DAHAN',matric:'T01STP25F039',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'SMAA CONSTRUCTION TRADING',penilai:'MOHAMAD SAFRI BIN MOHAMAD',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_154',nama:'AHMAD LUKMAN BIN ROZALI',matric:'T01STP25F040',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'LEISURE GENIUS SDN BHD',penilai:'MR. LEE WEE WEE',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_155',nama:'MUHAMMAD MIRZA MUZAMMIR BIN MOHD MAYUZIE',matric:'T01STP25F041',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'BANANANA FAIRUZ ENTERPRISE',penilai:'SHU MOHD FAIRUZ BIN HASIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_156',nama:'ADAM HAZIM BIN HASFARIZAN',matric:'T01STP25F042',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'NAZIMO LEGACY SDN. BHD.',penilai:'MUHAMAD AMIRUL BIN ROZALI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_157',nama:'MUHAMMAD KHAIRUL HAFIZ BIN MOHD SAFLI',matric:'T01STP25F043',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'FAR INTERGRATED CONSTRUCTION SDN. BHD.',penilai:'MOHAMAD AIMAN ARIF BIN SHAMSUDDIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_158',nama:'SHAHRUL AZRIEL DANIEL BIN ZAKARIA',matric:'T01STP25F046',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'AAKIF RESOURCES',penilai:'EN. MOHAMAD NAZMI BIN MUSA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_159',nama:'MUHAMMAD AKHIL HAIKAL BIN ZULHAMI',matric:'T01STP25F047',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'LEISURE GENIUS SDN BHD',penilai:'MR. LEE WEE WEE',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_160',nama:'MUHAMMAD AIFFY AIMIN BIN ZAINURI',matric:'T01STP25F048',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'DELIMA VENTURE SDN. BHD.',penilai:'MOHD HASMADI HASSAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_161',nama:'SHAHRUL MUKHRIZ BIN OMAR',matric:'T01STP25F049',program:'STP - Sijil Teknologi Penyaman Udara',kelas:'STP',syarikat:'MAHLIGAI BINA SDN. BHD.',penilai:'ILYA MAISARAH BINTI MAMAT',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_162',nama:'MUHAMMAD AMIR ZAFRI BIN AZMAN',matric:'T41STS25F001',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'JKR DAERAH KUALA NERUS',penilai:'Ts. MUHAMAD FAHMI BIN MUDA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_163',nama:'MUHAMMAD FAKHRAN BIN ZAKI',matric:'T41STS25F005',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'PAKHRIZAN KADIR ARCHITECT',penilai:'AR. WAN PAKHRIZAN WAN KADIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_164',nama:'AMIR FAKHRI BIN BADRUL HISYAM',matric:'T41STS25F006',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'Zuky design & properties',penilai:'AHMAD MARZUKI BIN MANAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_165',nama:'MUHAMMAD IQBAL IHSAN BIN MOHD RIZUAN',matric:'T41STS25F008',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'JABATAN PERANCANGAN MAJLIS DAERAH DUNGUN',penilai:'PN. SYALWAMA BT SULAIMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_166',nama:'WAN KHALISAH UMAIRAH BINTI TUN MOHD SHAH',matric:'T41STS25F009',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'PAKHRIZAN KADIR ARCHITECT',penilai:'AR. WAN PAKHRIZAN WAN KADIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_167',nama:'WAN NUR NAISARA BINTI WAN MUHD NARISHAM',matric:'T41STS25F011',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'PAKHRIZAN KADIR ARCHITECT',penilai:'AR. WAN PAKHRIZAN WAN KADIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_168',nama:'MUHAMMAD ZAKWAN BIN MOHD SUKRI',matric:'T41STS25F012',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'JABATAN KERJA RAYA KETENGAH',penilai:'SITI NORFAKIAH BINTI HAZMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_169',nama:'MUHAMMAD DANISH ASYRAF BIN MUHAMMAD NIZAM',matric:'T41STS25F013',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'JABATAN PERANCANGAN MAJLIS DAERAH DUNGUN',penilai:'PN. SYALWAMA BT SULAIMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_170',nama:'NUR ANIS UMAIRA BINTI ABDULLAH',matric:'T41STS25F014',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'CHEWAN ARCHITECTURE SDN BHD',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_171',nama:'CHE KU MARSYA MAISARAH BINTI CHE KU HASSIM',matric:'T41STS25F015',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'CHEWAN ARCHITECTURE SDN BHD',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_172',nama:'MUHAMMAD ASHRAF BIN MUHAMAD RIDZUAN',matric:'T41STS25F016',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'CPAB & PENGURUSAN KORPORAT',penilai:'AR. MOHD BUKHARI B. A. RAZAK',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_173',nama:'DARWEENA BATRISYA BINTI HUSLAN',matric:'T41STS25F017',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'KEMBANGAN INTERNATIONAL SDN BHD',penilai:'NUR FITRI AYUNI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_174',nama:'RIANNA AUDREY BINTI MOHAMMED ADRENO',matric:'T41STS25F018',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'ARKITEK IRFAN SUHAIMI',penilai:'Ar. IRFAN BIN AHMAD SUHAIMI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_175',nama:'NURAZZY ISKANDAR',matric:'T41STS25F019',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'Tiada Maklumat',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_176',nama:'MUHAMMAD KHAIRI HADI BIN RADZALI',matric:'T41STS25F020',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'NSA PROPERTIES & MANAGEMENT',penilai:'SHARIFAH AZIANA BT MOHAMED GHAZALI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_177',nama:'MUHAMMAD ADAM BIN NORAZIZAN',matric:'T41STS25F021',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'CPAB & PENGURUSAN KORPORAT',penilai:'AR. MOHD BUKHARI B. A. RAZAK',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_178',nama:'MUHAMMAD HAIQAL BIN MUHAMMAD SUKRI',matric:'T41STS25F022',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'MFA PROPERTIES PLT',penilai:'TUAN AHMAD FARIEZ BIN TUAN RUSLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_179',nama:'NOOR ZAHIRAH NASUHA BINTI MAT LAZIM',matric:'T41STS25F023',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'EMIR ARCHITECTS SDN BHD',penilai:'MOHAMAD YUSRI AMIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_180',nama:'WAN NUR ARISYA IZZATI BINTI MOHD ARIS',matric:'T41STS25F024',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'ARKITEK IRFAN SUHAIMI',penilai:'Ar. IRFAN BIN AHMAD SUHAIMI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_181',nama:'NUR NAJEHA BINTI EMBI',matric:'T41STS25F025',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'AKASHAH ARCHITECT & ASSOCIATES SDN.BHD.',penilai:'ELMEY SHAHRIR BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_182',nama:'UMMI ADANI BINTI ISMAIL',matric:'T41STS25F026',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'FIZIEY DESIGN STUDIO',penilai:'MOHD HAFIZI BIN WAHAB',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_183',nama:'MUHAMMAD SYAMER AMSYAR BIN MASSRY',matric:'T41STS25F027',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'M SARIZAL SHAMSUDDIN ARCHITECT',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_184',nama:'WAN NOR SYAQIERAH BINTI WAN RUSDI',matric:'T41STS25F028',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'KWH SOLUTINS SDN BHD',penilai:'MISS NOR IMANINA BINTI VADAWI @ ZAWAWI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_185',nama:'MOHAMAD IRSYAD AKID BIN MOHD TASNI',matric:'T41STS25F029',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'MFA PROPERTIES PLT',penilai:'TUAN AHMAD FARIEZ BIN TUAN RUSLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_186',nama:'NURUL FADHILAH IZATIE BINTI MAT NAWI',matric:'T41STS25F030',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'TENGKU AZRIN CONSTRUCTION',penilai:'TENGKU MOHAMAD AZRIN BIN TUAN NAWI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_187',nama:'AZRIEN AUNI BINTI CHE KAMARUDDIN',matric:'T41STS25F031',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'KEMBANGAN INTERNATIONAL SDN BHD',penilai:'NUR FITRI AYUNI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_188',nama:'MUHAMMAD ZARIF AIMAN BIN ZAHAMAD',matric:'T41STS25F032',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'JABATAN KERJA RAYA KETENGAH',penilai:'SITI NORFAKIAH BINTI HAZMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_189',nama:'MUHAMMAD AQIL AIMAN BIN MOHAMAD AMIN',matric:'T41STS25F034',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'JABATAN KERJA RAYA KETENGAH',penilai:'SITI NORFAKIAH BINTI HAZMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_190',nama:'NUR FATIHAH BINTI KAMARUDIN',matric:'T41STS25F035',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'PAKHRIZAN KADIR ARCHITECT',penilai:'AR. WAN PAKHRIZAN WAN KADIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_191',nama:'MUHAMMAD SYAFIQ ADAM BIN FAISA',matric:'T41STS25F036',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'CPAB & PENGURUSAN KORPORAT',penilai:'AR. MOHD BUKHARI B. A. RAZAK',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_192',nama:'MUHAMMAD IMAN NURUDDIN BIN MOHD AZMI',matric:'T41STS25F037',program:'SIJIL TEKNOLOGI SENIBINA',kelas:'',syarikat:'Tiada Maklumat',penilai:'',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_193',nama:'NUR SUZLIENA AINATASHA BINTI ALI',matric:'T31SFP25F001',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'BYNIKS RESOURCES',penilai:'NIK MOHD ZAMRI B. ABU BAKAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_194',nama:'RASUL AMIR BIN MUHAMAD',matric:'T31SFP25F002',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'SOLLAH TUKANG JAHIT',penilai:'MOHD NASROL B. ABD. WAHAB',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_195',nama:'NUR AMILA AINI BINTI ZAIDI',matric:'T31SFP25F003',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'BYNIKS RESOURCES',penilai:'NIK MOHD ZAMRI B. ABU BAKAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_196',nama:'NUR NADIA BINTI SHAIFUL ASWADI',matric:'T31SFP25F004',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'AN-NAJJAH COLLECTION',penilai:'MAJIDAH BT. IBRAHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_197',nama:'MUHAMMAD FADHIL AIMIN BIN ABDUL SAMII',matric:'T31SFP25F005',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'KOLEKSI NURFATIN ENTERPRISE',penilai:'ZAMZURINA BINTI ABD. KADIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_198',nama:'NUR SYAIDATUL AMIRAH BINTI MOHD LUTHFI',matric:'T31SFP25F006',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'AIMARRA COLLECTION',penilai:'SARAH HAIZUM BT. RUSLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_199',nama:'NIK NUR ATIRAH BINTI JAILANI',matric:'T31SFP25F007',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'SIMFONI CHINTA BRIDAL',penilai:'AIDA ZURIANA BT. MAT YAACOB',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_200',nama:'PUTERI ALYA BINTI MHD SOPHIAN',matric:'T31SFP25F008',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'NORIZ SERI IDAMAN PENGANTIN',penilai:'WAN SHARIFAH NORIZAN BT. ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_201',nama:'NURUL SYUHADA ELYIANA BINTI MOKHTAR',matric:'T31SFP25F009',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'AN-NAJJAH COLLECTION',penilai:'MAJIDAH BT. IBRAHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_202',nama:'NUR AISYA LAILI BINTI MUHAMAD FAIZAL',matric:'T31SFP25F010',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'MAYA ORKID COLLECTIONS',penilai:'SHARIFAH NURUL IFFAH BT. SYED MUSTAFA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_203',nama:'NUR AISYAH NABILAH BINTI YUSOFF',matric:'T31SFP25F011',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'AIMARRA COLLECTION',penilai:'SARAH HAIZUM BT. RUSLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_204',nama:'NUR WADHIHAH BINTI MD YUTI',matric:'T31SFP25F012',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'UZMALUX CREATIONS (M) SDN. BHD',penilai:'AUNI AFZA BT. RAHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_205',nama:'CHE KU NOR SYAIRAH BINTI CHE KU ABDILLAH',matric:'T31SFP25F013',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'ALIFAH TAILOR',penilai:'NURUL ALIFAH BT. ABDULLAH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_206',nama:'NUR KASIH FATIHAH BINTI MOHD SHUKRI',matric:'T31SFP25F014',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'NOR KEDAI JAHIT',penilai:'NORMANI BT. MOHAMED NOOR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_207',nama:'MUHAMMAD DANISH ZAKWAN BIN MAT RIFIN',matric:'T31SFP25F015',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'KS SPORT & APPAREL',penilai:'SALIM B. KASAM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_208',nama:'NOR ELIAYANA BINTI NORDDIN',matric:'T31SFP25F016',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'SIMFONI CHINTA BRIDAL',penilai:'AIDA ZURIANA BT. MAT YAACOB',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_209',nama:'WAN MARYAM HUSNA BINTI WAN MOHD RIZWAN',matric:'T31SFP25F017',program:'SIJIL FESYEN DAN PAKAIAN',kelas:'',syarikat:'NORIZ SERI IDAMAN PENGANTIN',penilai:'WAN SHARIFAH NORIZAN BT. ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_210',nama:'MUHAMMAD HAKIMI BIN SHAMSOOL AMRI',matric:'T51SKE25F002',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MSM TEKNIK ENTERPRISE',penilai:'EN. MOHD FAISAL BIN MOHD SOFI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_211',nama:'MOHAMMAD SYAFIQ AIDIL BIN MOHAMMAD SHARIFFUDDIN',matric:'T51SKE25F003',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MEGATECH MZ SERVICES & TRADING SDN. BHD.',penilai:'EN. MOHD FAKHRUL HAZMI BIN ZULKIPLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_212',nama:'MUHAMMAD PUTERA AIMAN BIN MOHAMED',matric:'T51SKE25F004',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'LAH RADIO & TV SERVICE',penilai:'EN. CHE MAHALLI BIN CHE LAH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_213',nama:'MUHAMMAD AIDIZUDDIN AIZAT BIN CHE BAKAR',matric:'T51SKE25F005',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'KEJURUTERAAN ELEKTRIK CAHAYA ALAM S/B',penilai:'NUR AIMAN BIN SHAHARUDDIN ZUBAIDI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_214',nama:'MOHAMAD AFIQ BIN MOHD NORDIN',matric:'T51SKE25F007',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'TRIO SERVICES SDN. BHD',penilai:'EN.RAJA KHAIRUL IRWAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_215',nama:'MUHAMMAD HAIKAL SHAH ISKANDAR BIN SAFIZAN',matric:'T51SKE25F008',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'HMN ELEMECO SDN. BHD',penilai:'EN. MOHD SHAH RIZAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_216',nama:'SYAHMI AIMAN BIN SAFARO AZLAN',matric:'T51SKE25F009',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'LKK AIR COND & ELECTRICAL',penilai:'EN. KANG LENG KHOONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_217',nama:'MUHAMAD ARIF HAIKAL BIN MUHAMMAD ZU',matric:'T51SKE25F010',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MONT AERO SDN BHD',penilai:'EN. MOHD FAISAL BIN HALIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_218',nama:'MUHAMMAD HARITH BIN ZULPIKA ALI',matric:'T51SKE25F011',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'WR ELECTRICAL SERVICES',penilai:'EN. ABDUL RAHMAN BIN OMAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_219',nama:'MUHAMMAD AKHMAL DANIEL BIN MOHD SUBRI',matric:'T51SKE25F012',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'TUNJANG DELIMA SDN BHD',penilai:'EN. MOHD NIZAM BIN ROMLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_220',nama:'MUHAMMAD SYAKIR AQWA BIN MOHD ZAHAIRUN',matric:'T51SKE25F013',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'PERODUA GLOBAL MANUFACTURING SDN. BHD',penilai:'IR. TS. MOHAMAD SYAZWAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_221',nama:'MUHAMMAD HAMIZAN BIN CHE HASSAN',matric:'T51SKE25F014',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'UHB JAYA ENTERPRISE',penilai:'EN. USMAN BIN HASHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_222',nama:'ANIQ LUBNA BIN AHMAD MUZAMMIL',matric:'T51SKE25F015',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MZ ELEKTRIK',penilai:'EN. MOHD ZIKRI BIN MD YUSOF',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_223',nama:'MUHAMMAD NUR HARITH BIN BAHARUDIN',matric:'T51SKE25F016',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'KD BAYU RESOURCES',penilai:'EN. MOHAMAD RODZI ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_224',nama:'MUHAMMAD ADAM FIRDAUS BIN MOHD HISHAM',matric:'T51SKE25F017',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'W.N.Y. CONSTRUCTION & TRADING SDN. BHD.',penilai:'EN. PAZILA BIN ABDUL ROHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_225',nama:'MUHAMMAD IRFAN HAZIQ BIN ZAIDI',matric:'T51SKE25F018',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'HIRA TEKNIK ENTERPRISE',penilai:'EN. MOHD OSMAN BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_226',nama:'MUIZ MUHAIMIN BIN ZAMRI',matric:'T51SKE25F019',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'SINAR BARU ELECTRICAL & ENTERPRISE',penilai:'EN. ISMAIL BIN ZAKARIA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_227',nama:'MUHAMMAD DANIAL HAIKAL BIN AHMAD',matric:'T51SKE25F020',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MQ PA SYSTEM',penilai:'EN. MOHD KASSIM SAHABU',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_228',nama:'WAN MUHAMMAD NAUFAL BIN WAN MUHD NAZARI @ WAN MUHD RODZI',matric:'T51SKE25F021',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'WR ELECTRICAL SERVICES',penilai:'EN. ABDUL RAHMAN BIN OMAR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_229',nama:'MUHAMMAD AFIQ BIN SAFIEE',matric:'T51SKE25F022',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'HIRA TEKNIK ENTERPRISE',penilai:'EN. MOHD OSMAN BIN ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_230',nama:'MUHAMMAD SYAKIR AIMAN BIN AZMI',matric:'T51SKE25F023',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MONT AERO SDN BHD',penilai:'EN. MOHD FAISAL BIN HALIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_231',nama:'WAN MUHAMMAD FAHIM AFIFI BIN WAN AZRISHAM',matric:'T51SKE25F024',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'KENALI ENGINEERING (M) SDN. BHD.',penilai:'EN. NIK MUHAMAD HAFIZ BIN MAT RIFFIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_232',nama:'MUHAMMAD HAZIQ BIN AMRAN',matric:'T51SKE25F025',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'ELEKTRIK KT SOON HENG SDN. BHD.',penilai:'PN. SYAZUWA AIZIRAH BT ABDULLAH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_233',nama:'AHMAD MURSYIQ BIN SHAMSUDIN',matric:'T51SKE25F026',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'DAYA MAJU ELEKTRIK',penilai:'EN. WAN MOHD FADHIL BIN WAN YAACOB',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_234',nama:'AMMAR AHSANEE BIN ZIMI',matric:'T51SKE25F027',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'NAZ AIRCOND AND ELECTRIC',penilai:'EN. AHMAD NAZHIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_235',nama:'NAZIMAN FIRDAUS BIN RAMLI',matric:'T51SKE25F028',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'TMJ JAYA SOLUTIONS',penilai:'EN. MOHD JINNI BIN MAMAT',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_236',nama:'MUHAMMAD WAFIR SYAWAL BIN SHA\\'\\'ARANI',matric:'T51SKE25F029',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'GMG SDN. BHD.',penilai:'EN. MOHAMAD ZULKHAIMIN BIN ZULKIFLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_237',nama:'MUHAMMAD RAFAIEL HAKIM BIN AHMAD RUSULLUDIN',matric:'T51SKE25F030',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'YRL AL FALAH ENTERPRISE',penilai:'EN. YUSRI BIN SULONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_238',nama:'MOHAMMAD SYAFIQ DANIEL HAIKAL BIN KAMARULZAMAN',matric:'T51SKE25F031',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'E MDANS PROJECTS ENTERPRISE',penilai:'EN. MOHD ARIF AZIMAN BIN AZAIMI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_239',nama:'AMIR AQIL MARZUQI BIN AMIRUL SAIDI',matric:'T51SKE25F032',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MZH BERKAT RESOURCES',penilai:'EN. MOHD ALIFF DAHLAN BIN MAT ZAIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_240',nama:'MUHAMMAD MUZAKKIR BIN MOHD AMIN',matric:'T51SKE25F033',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MSM TEKNIK ENTERPRISE',penilai:'EN. MOHD FAISAL BIN MOHD SOFI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_241',nama:'MUHAMMAD AMIN AMIRUL BIN ROHAIMI',matric:'T51SKE25F035',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'SYASYA TECH ENTERPRISE',penilai:'EN. SHAFIZAN BIN SALLEH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_242',nama:'LUQMANUL HAKIM BIN SUHAIMI',matric:'T51SKE25F036',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'TM USAHA TRADING',penilai:'EN. TUAN MANSHAR TUAN MUDA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_243',nama:'WAN MUHAMMAD ARIF BIN WAN OTHMAN',matric:'T51SKE25F037',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MZH BERKAT RESOURCES',penilai:'EN. MOHD ALIFF DAHLAN BIN MAT ZAIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_244',nama:'SYED RIZDAN BIN SYED MOHD NAZARI',matric:'T51SKE25F038',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'ZCOND MACHE ENTERPRISE',penilai:'EN. MOHD ZAFRUL FAZRIE BIN ZOLKEPLI',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_245',nama:'MUHAMMAD SYAHRIN BIN MOHD SENUN',matric:'T51SKE25F039',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'AR WIRING AND INSTALLATION ENTERPRISE',penilai:'EN. SAUFI AIDIL RAMDZI BIN MOHD NASIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_246',nama:'MUHAMMAD HAZIQ BIN MOHD HARIRI',matric:'T51SKE25F040',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'AZAM ELEKTRIKAL ENTERPRISE',penilai:'PN. SITI ZULAIKHA BT MUSTAPHA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_247',nama:'MUHAMAD NURHASANI BIN HALIM',matric:'T51SKE25F041',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'LKK AIR COND & ELECTRICAL',penilai:'EN. KANG LENG KHOONG',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_248',nama:'WAN MUHAMMAD MUHYIDDIN BIN WAN MOHD NAZORI',matric:'T51SKE25F042',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'UHB JAYA ENTERPRISE',penilai:'EN. USMAN BIN HASHIM',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_249',nama:'WAN MUHAMMAD MUHSIN BIN WAN HASSAN',matric:'T51SKE25F043',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'ABD ELECTRIC',penilai:'EN. WAN MOHAMAD HARIE BIN WAN AB RAHMAN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_250',nama:'MUHAMMAD DANIAL',matric:'T51SKE25F044',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'TMJ JAYA SOLUTIONS',penilai:'EN. MOHD JINNI BIN MAMAT',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_251',nama:'AHMAD SYAKIR BIN ZULKEPLI',matric:'T51SKE25F045',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'NAZ AIRCOND AND ELECTRIC',penilai:'EN. AHMAD NAZHIR',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_252',nama:'MOHAMAD AFWAN SALIHIN BIN MOHD AZIZI',matric:'T51SKE25F046',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'ST PANTAI TIMUR RESOURCES SDN. BHD',penilai:'EN. MUHAMMAD IKBAL ZULLKANAEN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_253',nama:'MOHAMAD HASRUL AIZAT BIN MOHD NASIR',matric:'T51SKE25F047',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'ANP BERKAT ENTERPRISE',penilai:'EN.AMIRUL NIZAM BIN PAKERDIN',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_254',nama:'MUHAMAD HAIM HILMAN HAFIZ BIN ABDULLAH',matric:'T51SKE25F048',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'TMJ JAYA SOLUTIONS',penilai:'EN. MOHD JINNI BIN MAMAT',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_255',nama:'WAN MUHAMMAD AISY FARIS BIN WAN OSMERA',matric:'T51SKE25F049',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'MJESB ELECTRICAL',penilai:'EN. MARWAZI BIN MUSTAFFA',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_256',nama:'MUHAMMAD NAJMI BIN MOHD NAZERI',matric:'T51SKE25F050',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'KZF TRADING',penilai:'EN.ZZHAHID',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_257',nama:'MOHAMMAD SHAH NAIDIL ALIMI BIN FAIZAL',matric:'T51SKE25F051',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'KD BAYU RESOURCES',penilai:'EN. MOHAMAD RODZI ISMAIL',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'},
+{id:'xl_258',nama:'MUHAMMAD HAFIZZI BIN MOHD ZAHID',matric:'T51SKE25F052',program:'SIJIL TEKNOLOGI ELEKTRIK',kelas:'',syarikat:'ELEKTRIK KT SOON HENG SDN. BHD.',penilai:'PN. SYAZUWA AIZIRAH BT ABDULLAH',kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'}];
+
+/* ========== STATE ========== */
+let S={user:null,page:'dash',s3:[],s4:[],editId:null,delId:null,delType:null,impType:null,impData:[],
+  f3:{q:'',prog:'',st:''},f4:{q:'',prog:'',pen:'',st:''},p3:1,p4:1,RPP:15};
+let CHS={};
+
+function loadSt(){
+  try{
+    const a=localStorage.getItem('upia_s3'),b=localStorage.getItem('upia_s4');
+    if(a)S.s3=JSON.parse(a); else{S.s3=genS3();saveSt();}
+    if(b)S.s4=JSON.parse(b);
+    else{
+      // Gunakan data sebenar dari fail Excel PENETAPAN LI SESI 2 2026/2027
+      S.s4=XLSX_S4.map(x=>({...x}));
+      saveSt();
+    }
+  }catch(e){S.s3=genS3();S.s4=XLSX_S4.map(x=>({...x}));saveSt();}
+}
+function resetXlsxData(){
+  if(!confirm('Ini akan memadamkan semua perubahan status dan memuatkan semula data asal dari fail Excel. Teruskan?'))return;
+  localStorage.removeItem('upia_s4');
+  S.s4=XLSX_S4.map(x=>({...x}));
+  saveSt();
+  if(S.page==='s4')rS4();
+  else if(S.page==='dash')rDash();
+  toast('Data Sem 4 telah ditetapkan semula kepada data Excel asal (258 pelajar)','ts');
+}
+function saveSt(){
+  localStorage.setItem('upia_s3',JSON.stringify(S.s3));
+  localStorage.setItem('upia_s4',JSON.stringify(S.s4));
+}
+
+/* ========== AUTH ========== */
+function switchTab(t){
+  document.querySelectorAll('.ltab').forEach((el,i)=>el.classList.toggle('active',i===(t==='staff'?0:1)));
+  document.getElementById('sf').classList.toggle('hidden',t!=='staff');
+  document.getElementById('stf').classList.toggle('hidden',t!=='student');
+}
+function doLogin(){
+  const id=document.getElementById('lid').value.trim().toLowerCase();
+  const pw=document.getElementById('lpw').value;
+  const u=CREDS.find(c=>c.id.toLowerCase()===id||c.email.toLowerCase()===id);
+  document.getElementById('lerr').style.display=(u&&u.pw===pw)?'none':'block';
+  if(u&&u.pw===pw){
+    S.user=u;
+    document.getElementById('login-pg').classList.add('hidden');
+    document.getElementById('admin-app').classList.remove('hidden');
+    document.getElementById('sb-uname').textContent=u.name.split(' ').slice(0,3).join(' ');
+    document.getElementById('tb-date').textContent=new Date().toLocaleDateString('ms-MY',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    nav('dash');
+    toast('Selamat datang, '+u.name.split(' ')[0]+'!','ts');
+  }
+}
+function logout(){
+  S.user=null;
+  document.getElementById('admin-app').classList.add('hidden');
+  document.getElementById('login-pg').classList.remove('hidden');
+  document.getElementById('lid').value='';document.getElementById('lpw').value='';
+}
+function doStudentSearch(){
+  const m=document.getElementById('smi').value.trim().toUpperCase();
+  if(!m){toast('Sila masukkan No. Matrik','tw');return;}
+  const s3=S.s3.find(s=>s.matric===m),s4=S.s4.find(s=>s.matric===m);
+  const st=s3||s4;
+  if(!st){toast('No. Matrik tidak dijumpai dalam sistem','te');return;}
+  renderSV(st,s3?3:4);
+  document.getElementById('login-pg').classList.add('hidden');
+  document.getElementById('sv').classList.remove('hidden');
+}
+function svBack(){
+  document.getElementById('sv').classList.add('hidden');
+  document.getElementById('login-pg').classList.remove('hidden');
+  document.getElementById('smi').value='';
+}
+
+/* ========== STUDENT VIEW ========== */
+function renderSV(st,sem){
+  document.getElementById('sv-name').textContent=st.nama;
+  document.getElementById('sv-mat').textContent=st.matric;
+  document.getElementById('sv-prog').textContent=st.program+' (Kelas '+st.kelas+')';
+  document.getElementById('sv-sem').textContent='Semester '+sem+(sem===3?' – Pra-Latihan Industri':' – Latihan Industri Aktif');
+  document.getElementById('sv-cr').classList.toggle('hidden',sem===3);
+  document.getElementById('sv-pr').classList.toggle('hidden',sem===3);
+  if(sem!==3){document.getElementById('sv-co').textContent=st.syarikat;document.getElementById('sv-pe').textContent=st.penilai;}
+  const iS3=sem===3;
+  let pct;
+  if(iS3){const d=[st.taklimat1,st.taklimat2,st.bengkelResume,st.penghantaranDokumen].filter(Boolean).length;pct=Math.round(d/4*100);}
+  else{const d=[st.kadLaporDiri,st.pemantauanPenilai,st.bukuCatatan,st.maklumbalasD1,st.maklumbalasD2].filter(m=>m==='Selesai').length;pct=Math.round(d/5*100);}
+  const bc=pct===100?'b-green':pct>0?'b-yellow':'b-red';
+  const bt=pct===100?'Selesai Semua':pct+'% Selesai';
+  document.getElementById('sv-badge').innerHTML=`<span class="badge ${bc}">${bt}</span>`;
+  const mg=document.getElementById('sv-ms');
+  if(iS3){
+    const ms=[['Taklimat 1',st.taklimat1],['Taklimat 2',st.taklimat2],['Bengkel Resume',st.bengkelResume],['Penghantaran Dokumen',st.penghantaranDokumen]];
+    mg.innerHTML=ms.map(([n,v])=>`<div class="ms-item"><div class="ms-name">${n}</div><span class="badge ${v?'b-green':'b-red'}">${v?'Selesai':'Belum Selesai'}</span></div>`).join('');
+  }else{
+    const ms=[['Kad Lapor Diri',st.kadLaporDiri],['Pemantauan Penilai',st.pemantauanPenilai],['Buku Catatan / Laporan LI',st.bukuCatatan],['Maklumbalas Syarikat (D1)',st.maklumbalasD1],['Maklumbalas Pelajar (D2)',st.maklumbalasD2]];
+    mg.innerHTML=ms.map(([n,v])=>`<div class="ms-item"><div class="ms-name">${n}</div><span class="badge ${v==='Selesai'?'b-green':v==='Dalam Proses'?'b-yellow':'b-red'}">${v}</span></div>`).join('');
+  }
+  const r3=Math.round(S.s3.reduce((a,s)=>a+[s.taklimat1,s.taklimat2,s.bengkelResume,s.penghantaranDokumen].filter(Boolean).length,0)/(S.s3.length*4)*100)||0;
+  const r4=Math.round(S.s4.reduce((a,s)=>a+[s.kadLaporDiri,s.pemantauanPenilai,s.bukuCatatan,s.maklumbalasD1,s.maklumbalasD2].filter(m=>m==='Selesai').length,0)/(S.s4.length*5)*100)||0;
+  document.getElementById('sv-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-ic si-teal">👨‍🎓</div><div><div class="stat-label">Jumlah Sem 3</div><div class="stat-val">${S.s3.length}</div><div class="stat-sub">Pelajar Pra-LI</div></div></div>
+    <div class="stat-card"><div class="stat-ic si-navy">🏭</div><div><div class="stat-label">Jumlah Sem 4</div><div class="stat-val">${S.s4.length}</div><div class="stat-sub">Pelajar Aktif LI</div></div></div>`;
+  document.getElementById('sv-ov').innerHTML=`
+    <div class="pr-row"><span class="pr-lbl">Kadar Pra-LI (Sem 3)</span><div class="pr-track"><div class="pr-fill" style="width:${r3}%"></div></div><span class="pr-pct">${r3}%</span></div>
+    <div class="pr-row"><span class="pr-lbl">Kadar Pemantauan LI (Sem 4)</span><div class="pr-track"><div class="pr-fill" style="width:${r4}%;background:var(--navy)"></div></div><span class="pr-pct">${r4}%</span></div>
+    <p class="tsm tmut mt3">Data dikemas kini oleh Pensyarah Penyelaras (PHLIP).</p>`;
+}
+
+/* ========== NAVIGATION ========== */
+function nav(p){
+  S.page=p;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.p===p));
+  ['dash','s3','s4','lap'].forEach(x=>document.getElementById('pg-'+x).classList.toggle('hidden',x!==p));
+  const T={dash:'Papan Pemuka',s3:'Semester 3 – Persediaan LI',s4:'Semester 4 – Pemantauan LI',lap:'Eksport & Laporan'};
+  document.getElementById('tb-title').textContent=T[p]||p;
+  document.getElementById('tb-crumb').textContent='UPIA / '+(T[p]||p);
+  closeSb();
+  if(p==='dash')rDash();else if(p==='s3')rS3();else if(p==='s4')rS4();else if(p==='lap')rLap();
+}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-back').classList.toggle('show');}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-back').classList.remove('show');}
+
+/* ========== DASHBOARD ========== */
+function rDash(){
+  const s3=S.s3,s4=S.s4,k3=['taklimat1','taklimat2','bengkelResume','penghantaranDokumen'],k4=['kadLaporDiri','pemantauanPenilai','bukuCatatan','maklumbalasD1','maklumbalasD2'];
+  const r3=Math.round(s3.reduce((a,s)=>a+k3.filter(k=>s[k]).length,0)/(s3.length*4)*100)||0;
+  const r4=Math.round(s4.reduce((a,s)=>a+k4.filter(k=>s[k]==='Selesai').length,0)/(s4.length*5)*100)||0;
+  const fd3=s3.filter(s=>k3.every(k=>s[k])).length,fd4=s4.filter(s=>k4.every(k=>s[k]==='Selesai')).length;
+  const el=document.getElementById('pg-dash');
+  el.innerHTML=`
+    <div class="ph"><h2>Papan Pemuka Utama</h2><p>Gambaran keseluruhan perkembangan Latihan Industri sesi semasa</p></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-ic si-navy">👨‍🎓</div><div><div class="stat-label">Pelajar Semester 3</div><div class="stat-val">${s3.length}</div><div class="stat-sub">Persediaan Pra-LI</div></div></div>
+      <div class="stat-card"><div class="stat-ic si-teal">🏭</div><div><div class="stat-label">Pelajar Semester 4</div><div class="stat-val">${s4.length}</div><div class="stat-sub">Latihan Industri Aktif</div></div></div>
+      <div class="stat-card"><div class="stat-ic si-green">✅</div><div><div class="stat-label">Kadar Siap Pra-LI</div><div class="stat-val">${r3}%</div><div class="stat-sub">${fd3} pelajar selesai semua</div></div></div>
+      <div class="stat-card"><div class="stat-ic si-yellow">📊</div><div><div class="stat-label">Kadar Siap Pemantauan</div><div class="stat-val">${r4}%</div><div class="stat-sub">${fd4} pelajar selesai semua</div></div></div>
+    </div>
+    <div class="ch-grid">
+      <div class="card"><div class="card-hd"><span class="card-title">Status Milestone Sem 3</span></div><div class="ch-box"><canvas id="ch-s3m"></canvas></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">Status Milestone Sem 4</span></div><div class="ch-box"><canvas id="ch-s4m"></canvas></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">Kadar Siap Pra-LI Mengikut Program</span></div><div class="ch-box"><canvas id="ch-p3"></canvas></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">Kadar Siap Pemantauan Mengikut Program</span></div><div class="ch-box"><canvas id="ch-p4"></canvas></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="card"><div class="card-hd"><span class="card-title">Kemajuan Pra-LI Per Milestone</span></div><div class="card-bd" id="d-p3"></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">Kemajuan Pemantauan Per Milestone</span></div><div class="card-bd" id="d-p4"></div></div>
+    </div>`;
+  
+  const L3=['Taklimat 1','Taklimat 2','Bengkel Resume','Pghtr. Dokumen'];
+  document.getElementById('d-p3').innerHTML=k3.map((k,i)=>{
+    const p=Math.round(s3.filter(s=>s[k]).length/s3.length*100)||0;
+    return `<div class="pr-row"><span class="pr-lbl">${L3[i]}</span><div class="pr-track"><div class="pr-fill" style="width:${p}%"></div></div><span class="pr-pct">${p}%</span></div>`;
+  }).join('');
+  const L4=['Kad Lapor Diri','Pmtauan Penilai','Buku Catatan / Laporan LI','Mklmbalas Syarikat (D1)','Mklmbalas Pelajar (D2)'];
+  document.getElementById('d-p4').innerHTML=k4.map((k,i)=>{
+    const p=Math.round(s4.filter(s=>s[k]==='Selesai').length/s4.length*100)||0;
+    return `<div class="pr-row"><span class="pr-lbl">${L4[i]}</span><div class="pr-track"><div class="pr-fill" style="width:${p}%;background:var(--navy)"></div></div><span class="pr-pct">${p}%</span></div>`;
+  }).join('');
+
+  setTimeout(()=>{
+    Object.values(CHS).forEach(c=>{try{c.destroy()}catch(e){}});CHS={};
+    const s3done=k3.map(k=>s3.filter(s=>s[k]).length);
+    CHS.s3m=new Chart(document.getElementById('ch-s3m'),{type:'bar',data:{labels:['Taklimat 1','Taklimat 2','Bengkel Resume','Pghtr. Dokumen'],datasets:[{label:'Selesai',data:s3done,backgroundColor:'#16a34a',borderRadius:4},{label:'Belum Selesai',data:k3.map((k,i)=>s3.length-s3done[i]),backgroundColor:'#fee2e2',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,grid:{color:'#f0f0f0'},ticks:{font:{size:10}}}}}});
+    const s4d=k4.map(k=>s4.filter(s=>s[k]==='Selesai').length),s4p=k4.map(k=>s4.filter(s=>s[k]==='Dalam Proses').length);
+    CHS.s4m=new Chart(document.getElementById('ch-s4m'),{type:'bar',data:{labels:['Kad Lapor Diri','Pmtauan Penilai','Buku Catatan','Mklmbl. D1','Mklmbl. D2'],datasets:[{label:'Selesai',data:s4d,backgroundColor:'#16a34a',borderRadius:4},{label:'Dalam Proses',data:s4p,backgroundColor:'#ca8a04',borderRadius:4},{label:'Belum Selesai',data:k4.map((k,i)=>s4.length-s4d[i]-s4p[i]),backgroundColor:'#fee2e2',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},y:{stacked:true,grid:{color:'#f0f0f0'},ticks:{font:{size:10}}}}}});
+    const pL=PROGS.map(p=>p.split(' – ')[0]);
+    CHS.p3=new Chart(document.getElementById('ch-p3'),{type:'bar',data:{labels:pL,datasets:[{label:'Kadar Siap (%)',data:PROGS.map(pr=>{const ps=s3.filter(s=>s.program===pr);return ps.length?Math.round(ps.reduce((a,s)=>a+k3.filter(k=>s[k]).length,0)/(ps.length*4)*100):0;}),backgroundColor:['#0a2342','#1a3a5c','#0097a7','#4dd0e1','#2c5282'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10},callback:v=>v+'%'},max:100}}}});
+    CHS.p4=new Chart(document.getElementById('ch-p4'),{type:'bar',data:{labels:pL,datasets:[{label:'Kadar Siap (%)',data:PROGS.map(pr=>{const ps=s4.filter(s=>s.program===pr);return ps.length?Math.round(ps.reduce((a,s)=>a+k4.filter(k=>s[k]==='Selesai').length,0)/(ps.length*5)*100):0;}),backgroundColor:['#16a34a','#0097a7','#ca8a04','#dc2626','#7c3aed'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10},callback:v=>v+'%'},max:100}}}});
+  },50);
+}
+
+/* ========== SEM 3 ========== */
+function rS3(){
+  document.getElementById('pg-s3').innerHTML=`
+    <div class="ph"><h2>Modul Pelajar Semester 3</h2><p>Pemantauan persediaan pelajar sebelum Latihan Industri (Pra-LI)</p></div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Senarai Pelajar Sem 3</span>
+        <div class="flex gap2"><button class="btn btn-out btn-sm" onclick="openImp('s3')">📥 Import CSV</button><button class="btn btn-navy btn-sm" onclick="openAddS3()">+ Tambah Pelajar</button></div>
+      </div>
+      <div class="card-bd-sm">
+        <div class="fb">
+          <div class="sw"><svg class="si-abs" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="si-inp" id="s3q" placeholder="Cari nama / no. matrik..." oninput="fS3()" value="${S.f3.q}"/></div>
+          <select class="fs" id="s3fp" onchange="fS3()">
+            <option value="">Semua Program</option>${PROGS.map(p=>`<option value="${p}" ${S.f3.prog===p?'selected':''}>${p.split(' – ')[0]}</option>`).join('')}
+          </select>
+          <select class="fs" id="s3fs" onchange="fS3()">
+            <option value="">Semua Status</option><option value="complete" ${S.f3.st==='complete'?'selected':''}>Selesai Semua</option>
+            <option value="incomplete" ${S.f3.st==='incomplete'?'selected':''}>Ada Belum Selesai</option><option value="none" ${S.f3.st==='none'?'selected':''}>Belum Ada Yang Selesai</option>
+          </select>
+          <button class="btn btn-out btn-sm" onclick="rS3Filter()">Tetapkan Semula</button>
+          <button class="btn btn-teal btn-sm mla" onclick="expS3()">📤 Eksport</button>
+        </div>
+      </div>
+      <div class="tbl-wrap" id="s3-tbl"></div>
+      <div class="pag" id="s3-pag"></div>
+    </div>`;
+  rS3T();
+}
+function gfS3(){
+  const f=S.f3;
+  return S.s3.filter(s=>{
+    const q=f.q.toLowerCase();
+    if(q&&!s.nama.toLowerCase().includes(q)&&!s.matric.toLowerCase().includes(q))return false;
+    if(f.prog&&s.program!==f.prog)return false;
+    const d=[s.taklimat1,s.taklimat2,s.bengkelResume,s.penghantaranDokumen].filter(Boolean).length;
+    if(f.st==='complete'&&d<4)return false;
+    if(f.st==='incomplete'&&d===4)return false;
+    if(f.st==='none'&&d>0)return false;
+    return true;
+  });
+}
+function fS3(){
+  S.f3.q=document.getElementById('s3q').value;
+  S.f3.prog=document.getElementById('s3fp').value;
+  S.f3.st=document.getElementById('s3fs').value;
+  S.p3=1;rS3T();
+}
+function rS3Filter(){S.f3={q:'',prog:'',st:''};document.getElementById('s3q').value='';document.getElementById('s3fp').value='';document.getElementById('s3fs').value='';S.p3=1;rS3T();}
+function rS3T(){
+  const data=gfS3(),rpp=S.RPP,tp=Math.max(1,Math.ceil(data.length/rpp));
+  if(S.p3>tp)S.p3=tp;
+  const st=(S.p3-1)*rpp,pg=data.slice(st,st+rpp);
+  const mk=[['taklimat1','T1'],['taklimat2','T2'],['bengkelResume','BR'],['penghantaranDokumen','PD']];
+  let h=`<table><thead><tr><th>#</th><th>Nama Pelajar</th><th>No. Matrik</th><th>Program</th><th>Kls</th>
+    <th style="text-align:center;min-width:76px">Taklimat 1</th><th style="text-align:center;min-width:76px">Taklimat 2</th>
+    <th style="text-align:center;min-width:76px">Bkl. Resume</th><th style="text-align:center;min-width:76px">Pghtr. Dokumen</th>
+    <th style="text-align:center">Siap</th><th style="text-align:center">Tindakan</th></tr></thead><tbody>`;
+  if(!pg.length)h+=`<tr><td colspan="11" class="tbl-empty">Tiada rekod ditemui</td></tr>`;
+  else pg.forEach((s,i)=>{
+    const d=[s.taklimat1,s.taklimat2,s.bengkelResume,s.penghantaranDokumen].filter(Boolean).length,p=Math.round(d/4*100);
+    const bc=p===100?'b-green':p>0?'b-yellow':'b-red',bt=p===100?'Selesai':p+'%';
+    h+=`<tr><td style="color:var(--gray-400);font-size:11px">${st+i+1}</td>
+      <td><div class="cell-name">${s.nama}</div></td><td><div class="cell-mat">${s.matric}</div></td>
+      <td><span style="font-size:11px;color:var(--gray-600)">${s.program.split(' – ')[0]}</span></td>
+      <td style="text-align:center"><span class="badge b-blue">${s.kelas}</span></td>
+      ${mk.map(([k])=>`<td style="text-align:center"><input type="checkbox" class="ck" ${s[k]?'checked':''} onchange="togS3('${s.id}','${k}',this)"/></td>`).join('')}
+      <td style="text-align:center"><span class="badge ${bc}">${bt}</span></td>
+      <td style="text-align:center;white-space:nowrap"><button class="btn btn-out btn-xs" onclick="openEdS3('${s.id}')">✏️</button> <button class="btn btn-red btn-xs" onclick="openDel('${s.id}','s3','${s.nama.replace(/'/g,"\\'")}')" >🗑️</button></td></tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('s3-tbl').innerHTML=h;
+  document.getElementById('s3-pag').innerHTML=`<span>${st+1}–${Math.min(st+rpp,data.length)} daripada ${data.length} rekod</span>${pagBtns(S.p3,tp,'p3')}`;
+}
+function togS3(id,k,el){const s=S.s3.find(x=>x.id===id);if(s){s[k]=el.checked;saveSt();toast('Status dikemas kini','ts');}}
+
+/* ========== SEM 4 ========== */
+function rS4(){
+  document.getElementById('pg-s4').innerHTML=`
+    <div class="ph"><h2>Modul Pelajar Semester 4</h2><p>Pemantauan pelajar semasa menjalani Latihan Industri (LI Aktif)</p></div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Senarai Pelajar Sem 4</span>
+        <div class="flex gap2"><button class="btn btn-out btn-sm" style="color:#ca8a04;border-color:#ca8a04" onclick="resetXlsxData()" title="Tetapkan semula kepada 258 pelajar dari fail Excel asal">🔄 Reset Data Excel</button><button class="btn btn-out btn-sm" onclick="openImp('s4')">📥 Import CSV</button><button class="btn btn-navy btn-sm" onclick="openAddS4()">+ Tambah Pelajar</button></div>
+      </div>
+      <div class="card-bd-sm">
+        <div class="fb">
+          <div class="sw"><svg class="si-abs" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="si-inp" id="s4q" placeholder="Cari nama / no. matrik..." oninput="fS4()" value="${S.f4.q}"/></div>
+          <select class="fs" id="s4fp" onchange="fS4()">
+            <option value="">Semua Program</option>${PROGS.map(p=>`<option value="${p}" ${S.f4.prog===p?'selected':''}>${p.split(' – ')[0]}</option>`).join('')}
+          </select>
+          <select class="fs" id="s4fpe" onchange="fS4()">
+            <option value="">Semua Penilai</option>${PENILAI.map(p=>`<option value="${p}" ${S.f4.pen===p?'selected':''}>${p.split(' ').slice(0,3).join(' ')}</option>`).join('')}
+          </select>
+          <select class="fs" id="s4fs" onchange="fS4()">
+            <option value="">Semua Status</option><option value="complete" ${S.f4.st==='complete'?'selected':''}>Semua Selesai</option>
+            <option value="d1" ${S.f4.st==='d1'?'selected':''}>Belum D1</option><option value="d2" ${S.f4.st==='d2'?'selected':''}>Belum D2</option>
+            <option value="kad" ${S.f4.st==='kad'?'selected':''}>Belum Kad Lapor Diri</option>
+          </select>
+          <button class="btn btn-out btn-sm" onclick="rS4Filter()">Tetapkan Semula</button>
+          <button class="btn btn-teal btn-sm mla" onclick="expS4()">📤 Eksport</button>
+        </div>
+      </div>
+      <div class="tbl-wrap" id="s4-tbl"></div>
+      <div class="pag" id="s4-pag"></div>
+    </div>`;
+  rS4T();
+}
+function gfS4(){
+  const f=S.f4;
+  return S.s4.filter(s=>{
+    const q=f.q.toLowerCase();
+    if(q&&!s.nama.toLowerCase().includes(q)&&!s.matric.toLowerCase().includes(q))return false;
+    if(f.prog&&s.program!==f.prog)return false;
+    if(f.pen&&s.penilai!==f.pen)return false;
+    if(f.st==='complete'&&![s.kadLaporDiri,s.pemantauanPenilai,s.bukuCatatan,s.maklumbalasD1,s.maklumbalasD2].every(m=>m==='Selesai'))return false;
+    if(f.st==='d1'&&s.maklumbalasD1==='Selesai')return false;
+    if(f.st==='d2'&&s.maklumbalasD2==='Selesai')return false;
+    if(f.st==='kad'&&s.kadLaporDiri==='Selesai')return false;
+    return true;
+  });
+}
+function fS4(){
+  S.f4.q=document.getElementById('s4q').value;S.f4.prog=document.getElementById('s4fp').value;
+  S.f4.pen=document.getElementById('s4fpe').value;S.f4.st=document.getElementById('s4fs').value;S.p4=1;rS4T();
+}
+function rS4Filter(){S.f4={q:'',prog:'',pen:'',st:''};['s4q','s4fp','s4fpe','s4fs'].forEach(id=>{document.getElementById(id).value='';});S.p4=1;rS4T();}
+function rS4T(){
+  const data=gfS4(),rpp=S.RPP,tp=Math.max(1,Math.ceil(data.length/rpp));
+  if(S.p4>tp)S.p4=tp;
+  const st=(S.p4-1)*rpp,pg=data.slice(st,st+rpp);
+  const mk=[['kadLaporDiri','Kad Lapor Diri'],['pemantauanPenilai','Pmtauan Penilai'],['bukuCatatan','Buku Catatan'],['maklumbalasD1','D1'],['maklumbalasD2','D2']];
+  let h=`<table><thead><tr><th>#</th><th>Nama Pelajar</th><th>No. Matrik</th><th>Program</th><th>Kls</th><th>Syarikat</th><th>Penilai</th>
+    ${mk.map(([,l])=>`<th style="text-align:center;min-width:80px;white-space:normal;line-height:1.3">${l}</th>`).join('')}
+    <th style="text-align:center">Siap</th><th style="text-align:center">Tindakan</th></tr></thead><tbody>`;
+  if(!pg.length)h+=`<tr><td colspan="13" class="tbl-empty">Tiada rekod ditemui</td></tr>`;
+  else pg.forEach((s,i)=>{
+    const d=[s.kadLaporDiri,s.pemantauanPenilai,s.bukuCatatan,s.maklumbalasD1,s.maklumbalasD2].filter(m=>m==='Selesai').length,p=Math.round(d/5*100);
+    const bc=p===100?'b-green':p>0?'b-yellow':'b-red',bt=p===100?'Selesai':p+'%';
+    h+=`<tr><td style="color:var(--gray-400);font-size:11px">${st+i+1}</td>
+      <td><div class="cell-name">${s.nama}</div></td><td><div class="cell-mat">${s.matric}</div></td>
+      <td><span style="font-size:11px;color:var(--gray-600)">${s.program.split(' – ')[0]}</span></td>
+      <td style="text-align:center"><span class="badge b-blue">${s.kelas}</span></td>
+      <td style="font-size:11px;color:var(--gray-600);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.syarikat}">${s.syarikat}</td>
+      <td style="font-size:11px;color:var(--gray-600);white-space:nowrap">${s.penilai.split(' ').slice(0,3).join(' ')}</td>
+      ${mk.map(([k])=>{const v=s[k],bc=v==='Selesai'?'b-green':v==='Dalam Proses'?'b-yellow':'b-red';
+        return `<td style="text-align:center"><select class="ss" onchange="updS4('${s.id}','${k}',this.value)"><option ${v==='Belum Selesai'?'selected':''}>Belum Selesai</option><option ${v==='Dalam Proses'?'selected':''}>Dalam Proses</option><option ${v==='Selesai'?'selected':''}>Selesai</option></select></td>`;
+      }).join('')}
+      <td style="text-align:center"><span class="badge ${bc}">${bt}</span></td>
+      <td style="text-align:center;white-space:nowrap"><button class="btn btn-out btn-xs" onclick="openEdS4('${s.id}')">✏️</button> <button class="btn btn-red btn-xs" onclick="openDel('${s.id}','s4','${s.nama.replace(/'/g,"\\'")}')" >🗑️</button></td></tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('s4-tbl').innerHTML=h;
+  document.getElementById('s4-pag').innerHTML=`<span>${st+1}–${Math.min(st+rpp,data.length)} daripada ${data.length} rekod</span>${pagBtns(S.p4,tp,'p4')}`;
+}
+function updS4(id,k,v){const s=S.s4.find(x=>x.id===id);if(s){s[k]=v;saveSt();toast('Status dikemas kini','ts');}}
+
+/* ========== LAPORAN ========== */
+function rLap(){
+  const s3=S.s3,s4=S.s4,k3=['taklimat1','taklimat2','bengkelResume','penghantaranDokumen'],k4=['kadLaporDiri','pemantauanPenilai','bukuCatatan','maklumbalasD1','maklumbalasD2'];
+  document.getElementById('pg-lap').innerHTML=`
+    <div class="ph"><h2>Eksport &amp; Laporan</h2><p>Jana dan muat turun laporan dalam pelbagai format</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card"><div class="card-hd"><span class="card-title">Eksport Sem 3 – Pra-LI</span></div><div class="card-bd"><p class="tsm tmut mb3">Muat turun senarai pelajar Semester 3 beserta status semua milestone persediaan LI.</p><div class="flex gap2"><button class="btn btn-teal" onclick="expS3('xlsx')">📊 Excel (.xlsx)</button><button class="btn btn-out" onclick="expS3('csv')">📄 CSV</button></div></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">Eksport Sem 4 – Pemantauan LI</span></div><div class="card-bd"><p class="tsm tmut mb3">Muat turun senarai pelajar Semester 4 beserta status semua milestone pemantauan LI.</p><div class="flex gap2"><button class="btn btn-teal" onclick="expS4('xlsx')">📊 Excel (.xlsx)</button><button class="btn btn-out" onclick="expS4('csv')">📄 CSV</button></div></div></div>
+    </div>
+    <div class="card mb4"><div class="card-hd"><span class="card-title">Ringkasan Statistik Mengikut Program</span></div><div class="card-bd"><div class="tbl-wrap">
+      <table><thead><tr><th>Program</th><th style="text-align:center">Jml Sem3</th><th style="text-align:center">Siap Pra-LI</th><th style="text-align:center">Jml Sem4</th><th style="text-align:center">Siap Pemantauan</th></tr></thead><tbody>
+        ${PROGS.map(prog=>{
+          const ps3=s3.filter(s=>s.program===prog),ps4=s4.filter(s=>s.program===prog);
+          const r3=ps3.length?Math.round(ps3.reduce((a,s)=>a+k3.filter(k=>s[k]).length,0)/(ps3.length*4)*100):0;
+          const r4=ps4.length?Math.round(ps4.reduce((a,s)=>a+k4.filter(k=>s[k]==='Selesai').length,0)/(ps4.length*5)*100):0;
+          return `<tr><td>${prog}</td><td style="text-align:center">${ps3.length}</td><td style="text-align:center"><span class="badge ${r3===100?'b-green':r3>50?'b-yellow':'b-red'}">${r3}%</span></td><td style="text-align:center">${ps4.length}</td><td style="text-align:center"><span class="badge ${r4===100?'b-green':r4>50?'b-yellow':'b-red'}">${r4}%</span></td></tr>`;
+        }).join('')}
+      </tbody></table></div></div></div>
+    <div class="card"><div class="card-hd"><span class="card-title">Laporan Pensyarah Penilai (Sem 4)</span></div><div class="card-bd"><div class="tbl-wrap">
+      <table><thead><tr><th>Pensyarah Penilai</th><th style="text-align:center">Jml Pelajar</th><th style="text-align:center">Pemantauan Selesai</th><th style="text-align:center">D1 Selesai</th><th style="text-align:center">D2 Selesai</th></tr></thead><tbody>
+        ${PENILAI.map(pen=>{const ps=s4.filter(s=>s.penilai===pen);return `<tr><td>${pen}</td><td style="text-align:center">${ps.length}</td><td style="text-align:center">${ps.filter(s=>s.pemantauanPenilai==='Selesai').length} / ${ps.length}</td><td style="text-align:center">${ps.filter(s=>s.maklumbalasD1==='Selesai').length} / ${ps.length}</td><td style="text-align:center">${ps.filter(s=>s.maklumbalasD2==='Selesai').length} / ${ps.length}</td></tr>`;}).join('')}
+      </tbody></table></div></div></div>`;
+}
+
+/* ========== PAGINATION ========== */
+function pagBtns(cur,tot,prop){
+  if(tot<=1)return '';
+  let b='<div class="pag-ctrl">';
+  b+=`<button class="pb" onclick="chPg('${prop}',${cur-1})" ${cur<=1?'disabled':''}>‹</button>`;
+  const r=[];for(let i=1;i<=tot;i++)if(i===1||i===tot||Math.abs(i-cur)<=1)r.push(i);
+  let prev=0;r.forEach(i=>{if(prev&&i-prev>1)b+='<button class="pb" disabled>…</button>';b+=`<button class="pb ${i===cur?'on':''}" onclick="chPg('${prop}',${i})">${i}</button>`;prev=i;});
+  b+=`<button class="pb" onclick="chPg('${prop}',${cur+1})" ${cur>=tot?'disabled':''}>›</button></div>`;
+  return b;
+}
+function chPg(prop,val){S[prop]=val;if(prop==='p3')rS3T();else if(prop==='p4')rS4T();}
+
+/* ========== EXPORT ========== */
+function expS3(fmt='xlsx'){
+  doExp(gfS3().map((s,i)=>({'Bil':i+1,'Nama Pelajar':s.nama,'No. Matrik':s.matric,'Program':s.program,'Kelas':s.kelas,'Taklimat 1':s.taklimat1?'Selesai':'Belum Selesai','Taklimat 2':s.taklimat2?'Selesai':'Belum Selesai','Bengkel Resume':s.bengkelResume?'Selesai':'Belum Selesai','Penghantaran Dokumen':s.penghantaranDokumen?'Selesai':'Belum Selesai'})),'Senarai_Sem3_PraLI',fmt);
+}
+function expS4(fmt='xlsx'){
+  doExp(gfS4().map((s,i)=>({'Bil':i+1,'Nama Pelajar':s.nama,'No. Matrik':s.matric,'Program':s.program,'Kelas':s.kelas,'Syarikat':s.syarikat,'Pensyarah Penilai':s.penilai,'Kad Lapor Diri':s.kadLaporDiri,'Pemantauan Penilai':s.pemantauanPenilai,'Buku Catatan / Laporan LI':s.bukuCatatan,'Maklumbalas Syarikat (D1)':s.maklumbalasD1,'Maklumbalas Pelajar (D2)':s.maklumbalasD2})),'Senarai_Sem4_PemantauanLI',fmt);
+}
+function doExp(rows,fn,fmt){
+  if(typeof XLSX==='undefined'){toast('Perpustakaan XLSX tidak dimuatkan','te');return;}
+  if(fmt==='csv'){const ws=XLSX.utils.json_to_sheet(rows);const csv=XLSX.utils.sheet_to_csv(ws);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));a.download=fn+'.csv';a.click();toast('Fail CSV dimuat turun','ts');}
+  else{const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=[{wch:5},{wch:35},{wch:18},{wch:35},{wch:6},{wch:20},{wch:20},{wch:20},{wch:20},{wch:22},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,ws,'Data');XLSX.writeFile(wb,fn+'.xlsx');toast('Fail Excel dimuat turun','ts');}
+}
+
+/* ========== MODALS ========== */
+function openMo(id){document.getElementById(id).classList.add('show');}
+function closeMo(id){document.getElementById(id).classList.remove('show');}
+function openAddS3(){S.editId=null;document.getElementById('mo-s3-title').textContent='Tambah Pelajar Semester 3';['s3n','s3m','s3k'].forEach(id=>document.getElementById(id).value='');document.getElementById('s3p').value='';['s3t1','s3t2','s3wr','s3pd'].forEach(id=>document.getElementById(id).checked=false);openMo('mo-s3');}
+function openEdS3(id){const s=S.s3.find(x=>x.id===id);if(!s)return;S.editId=id;document.getElementById('mo-s3-title').textContent='Kemaskini Pelajar Semester 3';document.getElementById('s3n').value=s.nama;document.getElementById('s3m').value=s.matric;document.getElementById('s3p').value=s.program;document.getElementById('s3k').value=s.kelas;document.getElementById('s3t1').checked=s.taklimat1;document.getElementById('s3t2').checked=s.taklimat2;document.getElementById('s3wr').checked=s.bengkelResume;document.getElementById('s3pd').checked=s.penghantaranDokumen;openMo('mo-s3');}
+function saveS3(){
+  const n=document.getElementById('s3n').value.trim(),m=document.getElementById('s3m').value.trim().toUpperCase(),p=document.getElementById('s3p').value,k=document.getElementById('s3k').value.trim().toUpperCase()||'A';
+  if(!n||!m||!p){toast('Sila isi semua maklumat wajib (*)','te');return;}
+  if(!S.editId&&S.s3.find(s=>s.matric===m)){toast('No. Matrik sudah wujud dalam Sem 3','te');return;}
+  const d={id:S.editId||'s3_'+Date.now(),nama:n,matric:m,program:p,kelas:k,taklimat1:document.getElementById('s3t1').checked,taklimat2:document.getElementById('s3t2').checked,bengkelResume:document.getElementById('s3wr').checked,penghantaranDokumen:document.getElementById('s3pd').checked};
+  if(S.editId){const i=S.s3.findIndex(x=>x.id===S.editId);S.s3[i]=d;}else S.s3.push(d);
+  saveSt();closeMo('mo-s3');rS3T();toast(S.editId?'Rekod dikemas kini':'Pelajar berjaya ditambah','ts');S.editId=null;
+}
+function openAddS4(){S.editId=null;document.getElementById('mo-s4-title').textContent='Tambah Pelajar Semester 4';['s4n','s4m','s4k','s4sy'].forEach(id=>document.getElementById(id).value='');['s4p','s4pe'].forEach(id=>document.getElementById(id).value='');['s4m1','s4m2','s4m3','s4m4','s4m5'].forEach(id=>document.getElementById(id).value='Belum Selesai');openMo('mo-s4');}
+function openEdS4(id){const s=S.s4.find(x=>x.id===id);if(!s)return;S.editId=id;document.getElementById('mo-s4-title').textContent='Kemaskini Pelajar Semester 4';document.getElementById('s4n').value=s.nama;document.getElementById('s4m').value=s.matric;document.getElementById('s4p').value=s.program;document.getElementById('s4k').value=s.kelas;document.getElementById('s4sy').value=s.syarikat;document.getElementById('s4pe').value=s.penilai;document.getElementById('s4m1').value=s.kadLaporDiri;document.getElementById('s4m2').value=s.pemantauanPenilai;document.getElementById('s4m3').value=s.bukuCatatan;document.getElementById('s4m4').value=s.maklumbalasD1;document.getElementById('s4m5').value=s.maklumbalasD2;openMo('mo-s4');}
+function saveS4(){
+  const n=document.getElementById('s4n').value.trim(),m=document.getElementById('s4m').value.trim().toUpperCase(),p=document.getElementById('s4p').value,k=document.getElementById('s4k').value.trim().toUpperCase()||'A',sy=document.getElementById('s4sy').value.trim(),pe=document.getElementById('s4pe').value;
+  if(!n||!m||!p||!sy){toast('Sila isi semua maklumat wajib (*)','te');return;}
+  if(!S.editId&&S.s4.find(s=>s.matric===m)){toast('No. Matrik sudah wujud dalam Sem 4','te');return;}
+  const d={id:S.editId||'s4_'+Date.now(),nama:n,matric:m,program:p,kelas:k,syarikat:sy,penilai:pe,kadLaporDiri:document.getElementById('s4m1').value,pemantauanPenilai:document.getElementById('s4m2').value,bukuCatatan:document.getElementById('s4m3').value,maklumbalasD1:document.getElementById('s4m4').value,maklumbalasD2:document.getElementById('s4m5').value};
+  if(S.editId){const i=S.s4.findIndex(x=>x.id===S.editId);S.s4[i]=d;}else S.s4.push(d);
+  saveSt();closeMo('mo-s4');rS4T();toast(S.editId?'Rekod dikemas kini':'Pelajar berjaya ditambah','ts');S.editId=null;
+}
+function openDel(id,type,name){S.delId=id;S.delType=type;document.getElementById('del-name').textContent=name;openMo('mo-del');}
+function confirmDel(){
+  if(S.delType==='s3')S.s3=S.s3.filter(s=>s.id!==S.delId);
+  else S.s4=S.s4.filter(s=>s.id!==S.delId);
+  saveSt();closeMo('mo-del');
+  if(S.page==='s3')rS3T();else if(S.page==='s4')rS4T();
+  toast('Rekod berjaya dipadam','ts');
+}
+
+/* ========== CSV IMPORT ========== */
+function openImp(type){
+  S.impType=type;S.impData=[];
+  document.getElementById('imp-title').textContent=`Import Pelajar CSV – Semester ${type==='s3'?3:4}`;
+  document.getElementById('ip-wrap').classList.add('hidden');document.getElementById('btn-imp').classList.add('hidden');
+  document.getElementById('cfi').value='';openMo('mo-imp');
+}
+function dov(e){e.preventDefault();document.getElementById('uz').classList.add('dv');}
+function dop(e){e.preventDefault();document.getElementById('uz').classList.remove('dv');const f=e.dataTransfer.files[0];if(f)pcsv(f);}
+function hcsv(e){const f=e.target.files[0];if(f)pcsv(f);}
+function pcsv(file){
+  const r=new FileReader();r.onload=e=>{
+    const lines=e.target.result.split(/\r?\n/).filter(l=>l.trim()),data=[];
+    lines.forEach((line,idx)=>{if(idx===0&&line.toLowerCase().includes('nama'))return;const c=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(c.length<2)return;data.push({nama:c[0]||'',matric:(c[1]||'').toUpperCase(),program:c[2]||PROGS[0],kelas:(c[3]||'A').toUpperCase(),syarikat:c[4]||'Syarikat Tidak Dinyatakan',penilai:c[5]||PENILAI[0]});});
+    S.impData=data;rImpPrev(data);
+  };r.readAsText(file,'UTF-8');
+}
+function rImpPrev(data){
+  const iS4=S.impType==='s4',cols=iS4?['Nama','No. Matrik','Program','Kelas','Syarikat','Penilai']:['Nama','No. Matrik','Program','Kelas'];
+  let h=`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  data.slice(0,10).forEach(r=>{h+=`<tr><td>${r.nama}</td><td>${r.matric}</td><td>${r.program.split(' – ')[0]}</td><td>${r.kelas}</td>${iS4?`<td>${r.syarikat}</td><td>${r.penilai}</td>`:''}</tr>`;});
+  if(data.length>10)h+=`<tr><td colspan="${cols.length}" style="text-align:center;color:var(--gray-400);font-style:italic">...dan ${data.length-10} rekod lagi</td></tr>`;
+  h+='</tbody></table>';
+  document.getElementById('ip-tbl').innerHTML=h;document.getElementById('ip-sum').textContent=`${data.length} rekod dijumpai.`;
+  document.getElementById('ip-wrap').classList.remove('hidden');document.getElementById('btn-imp').classList.remove('hidden');
+}
+function doImport(){
+  const iS4=S.impType==='s4';let added=0,skip=0;
+  S.impData.forEach(r=>{
+    if(!r.nama||!r.matric){skip++;return;}
+    if(iS4){if(S.s4.find(s=>s.matric===r.matric)){skip++;return;}S.s4.push({id:'s4_'+Date.now()+'_'+(added++),nama:r.nama,matric:r.matric,program:r.program,kelas:r.kelas,syarikat:r.syarikat,penilai:r.penilai,kadLaporDiri:'Belum Selesai',pemantauanPenilai:'Belum Selesai',bukuCatatan:'Belum Selesai',maklumbalasD1:'Belum Selesai',maklumbalasD2:'Belum Selesai'});}
+    else{if(S.s3.find(s=>s.matric===r.matric)){skip++;return;}S.s3.push({id:'s3_'+Date.now()+'_'+(added++),nama:r.nama,matric:r.matric,program:r.program,kelas:r.kelas,taklimat1:false,taklimat2:false,bengkelResume:false,penghantaranDokumen:false});}
+  });
+  saveSt();closeMo('mo-imp');if(S.page==='s3')rS3T();else if(S.page==='s4')rS4T();
+  toast(`${added} rekod diimport. ${skip} diabaikan (duplikat).`,'ts');
+}
+
+/* ========== TOAST ========== */
+function toast(msg,cls=''){
+  const ic={ts:'✅',te:'❌',tw:'⚠️','':'ℹ️'};
+  const c=document.getElementById('tc'),t=document.createElement('div');
+  t.className='toast'+(cls?' '+cls:'');t.innerHTML=`<span>${ic[cls]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),350);},3200);
+}
+
+/* ========== KEYBOARD / ESCAPE ========== */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')document.querySelectorAll('.mo.show').forEach(m=>m.classList.remove('show'));
+  if(e.key==='Enter'&&!document.getElementById('sf').classList.contains('hidden')&&!document.getElementById('login-pg').classList.contains('hidden'))doLogin();
+});
+document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+
+/* ========== INIT ========== */
+loadSt();
+document.getElementById('tb-date').textContent=new Date().toLocaleDateString('ms-MY',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+</script>
+</body>
+</html>
